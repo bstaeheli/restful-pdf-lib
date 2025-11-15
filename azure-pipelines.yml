@@ -1,0 +1,151 @@
+# Azure DevOps Pipeline for PDF Library Web Service
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    exclude:
+      - README.md
+      - .github/**
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - name: nodeVersion
+    value: '20.x'
+  - name: dockerRegistryServiceConnection
+    value: 'YourDockerRegistryConnection' # Update this
+  - name: imageRepository
+    value: 'pdf-lib-webservice'
+  - name: dockerfilePath
+    value: '$(Build.SourcesDirectory)/Dockerfile'
+  - name: tag
+    value: '$(Build.BuildId)'
+
+stages:
+  - stage: Build
+    displayName: 'Build and Test'
+    jobs:
+      - job: BuildAndTest
+        displayName: 'Build, Lint, and Test'
+        steps:
+          - task: NodeTool@0
+            displayName: 'Install Node.js'
+            inputs:
+              versionSpec: $(nodeVersion)
+
+          - task: Cache@2
+            displayName: 'Cache npm packages'
+            inputs:
+              key: 'npm | "$(Agent.OS)" | package-lock.json'
+              restoreKeys: |
+                npm | "$(Agent.OS)"
+              path: $(npm_config_cache)
+
+          - script: |
+              npm ci
+            displayName: 'Install dependencies'
+
+          - script: |
+              npm run lint
+            displayName: 'Run ESLint'
+            continueOnError: true
+
+          - script: |
+              npm run build
+            displayName: 'Build TypeScript'
+
+          - script: |
+              npm test -- --ci --coverage --maxWorkers=2
+            displayName: 'Run tests with coverage'
+
+          - task: PublishTestResults@2
+            displayName: 'Publish test results'
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/junit.xml'
+              mergeTestResults: true
+              failTaskOnFailedTests: true
+
+          - task: PublishCodeCoverageResults@1
+            displayName: 'Publish code coverage'
+            condition: succeededOrFailed()
+            inputs:
+              codeCoverageTool: 'Cobertura'
+              summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage/cobertura-coverage.xml'
+              reportDirectory: '$(System.DefaultWorkingDirectory)/coverage'
+
+  - stage: Docker
+    displayName: 'Build and Push Docker Image'
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: BuildDockerImage
+        displayName: 'Build and Push Docker Image'
+        steps:
+          - task: Docker@2
+            displayName: 'Build Docker image'
+            inputs:
+              command: build
+              repository: $(imageRepository)
+              dockerfile: $(dockerfilePath)
+              tags: |
+                $(tag)
+                latest
+
+          - task: Docker@2
+            displayName: 'Push Docker image'
+            inputs:
+              command: push
+              repository: $(imageRepository)
+              containerRegistry: $(dockerRegistryServiceConnection)
+              tags: |
+                $(tag)
+                latest
+
+  - stage: Deploy
+    displayName: 'Deploy to Azure Container Instance'
+    dependsOn: Docker
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployACI
+        displayName: 'Deploy to Azure Container Instance'
+        environment: 'production'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureCLI@2
+                  displayName: 'Deploy to Azure Container Instance'
+                  inputs:
+                    azureSubscription: 'YourAzureServiceConnection' # Update this
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    inlineScript: |
+                      az container create \
+                        --resource-group YourResourceGroup \
+                        --name pdf-lib-webservice \
+                        --image yourregistry.azurecr.io/$(imageRepository):$(tag) \
+                        --cpu 1 \
+                        --memory 1 \
+                        --registry-login-server yourregistry.azurecr.io \
+                        --registry-username $(registryUsername) \
+                        --registry-password $(registryPassword) \
+                        --dns-name-label pdf-lib-service \
+                        --ports 3000 \
+                        --environment-variables \
+                          NODE_ENV=production \
+                          PORT=3000 \
+                        --secure-environment-variables \
+                          API_SECRET=$(apiSecret) \
+                        --restart-policy Always
