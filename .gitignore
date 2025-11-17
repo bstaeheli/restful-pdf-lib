@@ -22,6 +22,10 @@ src/test-pdf.ts
 .env.local
 .env.*.local
 
+# Azure deployment environment files
+azure/*.env
+!azure/*.env.template
+
 # IDE
 .vscode/
 .idea/

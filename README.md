@@ -80,6 +80,25 @@ docker run -p 3000:3000 -e API_SECRET=your-secret restful-pdf-lib
 
 ## Azure Deployment
 
+Deploy to Azure Container Instances with automatic HTTPS using Bicep templates.
+
+**See [azure/README.md](./azure/README.md) for detailed deployment instructions.**
+
+Quick deployment:
+```bash
+cd azure
+cp .env.template .env
+# Edit .env with your Azure configuration
+./deploy.ps1
+```
+
+The deployment includes:
+- Azure Container Instances with the PDF library service
+- Caddy reverse proxy for automatic HTTPS
+- Azure Storage for persistence
+- Public HTTPS endpoint
+
+For manual deployment:
 ```bash
 az container create \
   --resource-group myResourceGroup \
