@@ -256,7 +256,7 @@ router.post(
       }
 
       // Fields can come from either req.body or as a "file" with application/json content-type
-      let fieldsData: string | undefined = req.body.fields;
+      let fieldsData: string | Record<string, any> | undefined = req.body.fields;
       
       if (!fieldsData) {
         // Check if fields was sent as a file-like part with content-type
@@ -276,9 +276,21 @@ router.post(
       let fieldData: Record<string, string | boolean | number>;
       
       try {
-        fieldData = typeof fieldsData === 'string' 
-          ? JSON.parse(fieldsData) 
-          : fieldsData;
+        // If fieldsData is already an object, use it directly
+        if (typeof fieldsData === 'object' && fieldsData !== null) {
+          fieldData = fieldsData;
+        } else if (typeof fieldsData === 'string') {
+          // Check if string is "[object Object]" which indicates a Swagger UI bug
+          if (fieldsData.trim() === '[object Object]') {
+            res.status(400).json({ 
+              error: 'Invalid JSON in "fields" parameter. Please enter the JSON data as text, not as an object reference.'
+            });
+            return;
+          }
+          fieldData = JSON.parse(fieldsData);
+        } else {
+          throw new Error('Unexpected fields data type');
+        }
       } catch {
         res.status(400).json({ 
           error: 'Invalid JSON in "fields" parameter' 
