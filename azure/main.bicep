@@ -14,6 +14,9 @@ param apiSecret string
 @description('The API base URL for the PDF library service.')
 param apiBaseUrl string
 
+@description('The Docker image tag to deploy (e.g., latest, main, sha-abc1234).')
+param imageTag string = 'latest'
+
 @description('The port on which the PDF library service listens.')
 param appPort int = 3000
 
@@ -38,5 +41,6 @@ module aci './aci.bicep' = {
     apiSecret: apiSecret
     apiBaseUrl: apiBaseUrl
     appPort: appPort
+    imageTag: imageTag
   }
 }

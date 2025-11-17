@@ -10,6 +10,8 @@ param apiBaseUrl string
 
 param appPort int = 3000
 
+param imageTag string = 'latest'
+
 var publicUrl = toLower('${containerGroupName}.${location}.azurecontainer.io')
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
@@ -64,7 +66,7 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2024-05-01-
         name: '${containerGroupName}-pdf-lib'
         properties: {
           // https://github.com/bstaeheli/restful-pdf-lib
-          image: 'ghcr.io/bstaeheli/restful-pdf-lib:latest'
+          image: 'ghcr.io/bstaeheli/restful-pdf-lib:${imageTag}'
           resources: {
             requests: {
               cpu: 1

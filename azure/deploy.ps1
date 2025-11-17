@@ -1,7 +1,10 @@
 # Parse command line arguments
 param(
     [Parameter(Position=0)]
-    [string]$Environment
+    [string]$Environment,
+    
+    [Parameter(Position=1)]
+    [string]$ImageTag = "latest"
 )
 
 # Determine environment file path
@@ -65,10 +68,31 @@ az login --tenant $tenantId --output none
 Write-Host "Setting subscription..." -ForegroundColor Cyan
 az account set --subscription $subscriptionId
 
-Write-Host "Creating resource group..." -ForegroundColor Cyan
+# Fetch available image tags from GitHub Container Registry
+Write-Host "`nFetching available Docker image tags from GHCR..." -ForegroundColor Cyan
+try {
+    $response = Invoke-RestMethod -Uri "https://ghcr.io/v2/bstaeheli/restful-pdf-lib/tags/list" -ErrorAction SilentlyContinue
+    if ($response.tags) {
+        $tags = $response.tags | Sort-Object -Descending | Select-Object -First 10
+        Write-Host "Available tags (latest 10):" -ForegroundColor Gray
+        foreach ($tag in $tags) {
+            if ($tag -eq $ImageTag) {
+                Write-Host "  • $tag" -ForegroundColor Green -NoNewline
+                Write-Host " ← selected" -ForegroundColor Yellow
+            } else {
+                Write-Host "  • $tag" -ForegroundColor Gray
+            }
+        }
+    }
+} catch {
+    Write-Host "Could not fetch tags (container may be private or network issue)" -ForegroundColor Yellow
+}
+
+Write-Host "`nCreating resource group..." -ForegroundColor Cyan
 az group create --name $resourceGroup --location $location --output none
 
 Write-Host "Deploying infrastructure (this may take a few minutes)..." -ForegroundColor Cyan
+Write-Host "Using Docker image tag: $ImageTag" -ForegroundColor Gray
 $deploymentResult = az deployment group create `
     --name pdf-lib-deployment `
     --resource-group $resourceGroup `
@@ -78,12 +102,23 @@ $deploymentResult = az deployment group create `
     location=$location `
     apiSecret=$apiSecret `
     apiBaseUrl=$apiBaseUrl `
+    imageTag=$ImageTag `
     --output json 2>&1
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "`nDeployment failed!" -ForegroundColor Red
     Write-Host $deploymentResult
     exit 1
+}
+
+# Force container restart to pull latest image
+Write-Host "`nRestarting container to pull latest image..." -ForegroundColor Cyan
+az container restart --name $containerGroupName --resource-group $resourceGroup --output none 2>&1 | Out-Null
+
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "Container restarted successfully" -ForegroundColor Green
+} else {
+    Write-Host "Note: Container restart failed (may be first deployment)" -ForegroundColor Yellow
 }
 
 # Display summary

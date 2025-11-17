@@ -1,6 +1,9 @@
 # Use Node.js LTS version
 FROM node:20-alpine AS builder
 
+# Build arguments for versioning
+ARG BUILD_NUMBER=0
+
 # Set working directory
 WORKDIR /app
 
@@ -12,6 +15,12 @@ RUN npm ci
 
 # Copy source code
 COPY . .
+
+# Update package.json version with build metadata
+RUN PACKAGE_VERSION=$(node -p "require('./package.json').version") && \
+    NEW_VERSION="${PACKAGE_VERSION}+build.${BUILD_NUMBER}" && \
+    sed -i "s/\"version\": \".*\"/\"version\": \"${NEW_VERSION}\"/" package.json && \
+    echo "Updated version to: ${NEW_VERSION}"
 
 # Build TypeScript
 RUN npm run build
