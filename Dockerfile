@@ -31,8 +31,8 @@ FROM node:20-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy updated package.json with build number from builder stage
+COPY --from=builder /app/package*.json ./
 
 # Install production dependencies only
 RUN npm ci --only=production && npm cache clean --force
