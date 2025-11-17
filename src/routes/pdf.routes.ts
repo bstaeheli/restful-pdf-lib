@@ -343,10 +343,15 @@ router.post(
         fieldData
       );
 
+      // Generate output filename based on input filename
+      const originalName = pdfFile.originalname || 'form.pdf';
+      const nameWithoutExt = originalName.replace(/\.pdf$/i, '');
+      const outputFilename = `${nameWithoutExt}.filled.pdf`;
+
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader(
         'Content-Disposition',
-        'attachment; filename="filled-form.pdf"'
+        `attachment; filename="${outputFilename}"`
       );
       res.setHeader('Content-Length', filledPdf.length.toString());
       res.send(filledPdf);
