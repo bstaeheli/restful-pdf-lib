@@ -9,16 +9,20 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB in bytes
-    fields: 10, // Allow up to 10 non-file fields
-    files: 1, // Only 1 file allowed
   },
   fileFilter: (_req, file, cb) => {
-    // Only accept PDF files and only for the 'pdf' field
-    if (file.fieldname === 'pdf' && file.mimetype === 'application/pdf') {
+    // Accept PDF files for the 'pdf' field or JSON data for 'fields' field
+    if (file.fieldname === 'pdf') {
+      if (file.mimetype === 'application/pdf') {
+        cb(null, true);
+      } else {
+        cb(new Error('Only PDF files are allowed'));
+      }
+    } else if (file.fieldname === 'fields') {
+      // Allow fields as a file-like part (Swagger UI does this with ;type=application/json)
       cb(null, true);
-    } else if (file.fieldname === 'pdf') {
-      cb(new Error('Only PDF files are allowed'));
     } else {
+      // Reject any other file fields
       cb(new Error(`Unexpected file field: ${file.fieldname}`));
     }
   },
@@ -165,13 +169,13 @@ router.post(
  *                 description: |
  *                   JSON string containing field names and values to fill.
  *                   The JSON object should conform to the FillFormFieldsData schema.
- *                   Due to multipart/form-data encoding, this must be sent as a JSON string.
+ *                   This is a TEXT field, not a file upload. Enter the JSON directly.
  *                 example: '{"fullName":"Anna Weber","email":"anna.weber@example.ch","phone":"+41 44 123 45 67","agreeToTerms":true,"country":"Switzerland","age":35}'
  *           encoding:
  *             pdf:
  *               contentType: application/pdf
  *             fields:
- *               contentType: application/json
+ *               contentType: text/plain
  *     responses:
  *       200:
  *         description: Successfully filled PDF form
@@ -233,20 +237,36 @@ router.post(
  */
 router.post(
   '/fill-form',
-  upload.single('pdf'),
+  upload.any(),
   async (req: Request, res: Response): Promise<void> => {
     try {
-      if (!req.file) {
+      const files = req.files as Express.Multer.File[];
+      
+      // Find the PDF file
+      const pdfFile = files?.find(f => f.fieldname === 'pdf');
+      
+      if (!pdfFile) {
         res.status(400).json({ error: 'No PDF file uploaded' });
         return;
       }
 
-      if (req.file.mimetype !== 'application/pdf') {
+      if (pdfFile.mimetype !== 'application/pdf') {
         res.status(400).json({ error: 'Uploaded file must be a PDF' });
         return;
       }
 
-      if (!req.body.fields) {
+      // Fields can come from either req.body or as a "file" with application/json content-type
+      let fieldsData: string | undefined = req.body.fields;
+      
+      if (!fieldsData) {
+        // Check if fields was sent as a file-like part with content-type
+        const fieldsFile = files?.find(f => f.fieldname === 'fields');
+        if (fieldsFile) {
+          fieldsData = fieldsFile.buffer.toString('utf-8');
+        }
+      }
+      
+      if (!fieldsData) {
         res.status(400).json({ 
           error: 'Missing "fields" data in request body' 
         });
@@ -256,9 +276,9 @@ router.post(
       let fieldData: Record<string, string | boolean | number>;
       
       try {
-        fieldData = typeof req.body.fields === 'string' 
-          ? JSON.parse(req.body.fields) 
-          : req.body.fields;
+        fieldData = typeof fieldsData === 'string' 
+          ? JSON.parse(fieldsData) 
+          : fieldsData;
       } catch {
         res.status(400).json({ 
           error: 'Invalid JSON in "fields" parameter' 
@@ -267,7 +287,7 @@ router.post(
       }
 
       const filledPdf = await pdfService.fillFormFields(
-        req.file.buffer,
+        pdfFile.buffer,
         fieldData
       );
 
