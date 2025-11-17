@@ -212,8 +212,8 @@ curl -X POST http://localhost:3000/api/pdf/extract-fields \
     {
       "name": "country",
       "type": "dropdown",
-      "value": "USA",
-      "options": ["USA", "Canada", "Mexico"]
+      "value": "Switzerland",
+      "options": ["Switzerland", "Austria", "Germany", "France", "Italy"]
     }
   ]
 }
