@@ -1,4 +1,5 @@
 import swaggerJsdoc from 'swagger-jsdoc';
+import packageJson from '../../package.json';
 
 // Get base URL and ensure it has protocol
 const getServerUrl = (): string => {
@@ -15,7 +16,7 @@ const options: swaggerJsdoc.Options = {
     openapi: '3.0.0',
     info: {
       title: 'PDF Library Web Service API',
-      version: '1.0.0',
+      version: packageJson.version,
       description: 'REST API for PDF manipulation using pdf-lib. Extract form fields from PDFs and fill PDF forms with data.',
       contact: {
         name: 'API Support',
