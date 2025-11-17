@@ -1,0 +1,12 @@
+{
+  "description": "Test with invalid field names mixed with valid ones",
+  "fields": {
+    "1.2": "ValidField",
+    "nonExistentField123": "This should be ignored",
+    "txtGeburtsdatum": "01011990"
+  },
+  "expectedResults": {
+    "1.2": "ValidField",
+    "txtGeburtsdatum": "01011990"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "description": "Partial fill test - only name fields",
+  "fields": {
+    "1.2": "TestNachname",
+    "1.3": "TestVorname"
+  },
+  "expectedResults": {
+    "1.2": "TestNachname",
+    "1.3": "TestVorname"
+  }
+}

@@ -6,9 +6,6 @@ dist/
 
 # Testing
 coverage/
-*.test.ts
-*.spec.ts
-__tests__
 
 # Test output files
 src/routes/__tests__/fixtures/output/
@@ -18,7 +15,7 @@ api-filled.pdf
 filled-form.pdf
 fill-data.json
 server.log
-test-pdf.ts
+src/test-pdf.ts
 
 # Environment variables
 .env

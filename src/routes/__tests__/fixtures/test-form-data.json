@@ -1,0 +1,27 @@
+{
+  "description": "Test data for Swiss employment certificate form (Arbeitgeberbescheinigung)",
+  "fields": {
+    "txtGeburtsdatum": "15011985",
+    "txtAHV-Nr": "1234567890",
+    "1.2": "Mustermann",
+    "1.3": "Max",
+    "1.4": "Musterstrasse 123",
+    "txt_2_von": "01012024",
+    "txt_2_bis": "31122024",
+    "Kontrollkästchen 62": true,
+    "Kontrollkästchen 63": false,
+    "Optionsfeld 21": "Auswahl1"
+  },
+  "expectedResults": {
+    "txtGeburtsdatum": "15011985",
+    "txtAHV-Nr": "1234567890",
+    "1.2": "Mustermann",
+    "1.3": "Max",
+    "1.4": "Musterstrasse 123",
+    "txt_2_von": "01012024",
+    "txt_2_bis": "31122024",
+    "Kontrollkästchen 62": true,
+    "Kontrollkästchen 63": false,
+    "Optionsfeld 21": "Auswahl1"
+  }
+}
