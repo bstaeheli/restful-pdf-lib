@@ -5,6 +5,26 @@ import { authMiddleware } from './middleware/auth.middleware';
 import { errorHandler } from './middleware/error.middleware';
 import { swaggerSpec } from './config/swagger';
 
+/**
+ * Creates and configures the Express application.
+ * 
+ * @returns Configured Express application instance
+ * 
+ * @remarks
+ * Sets up:
+ * - JSON and URL-encoded body parsing
+ * - Health check endpoint (no authentication)
+ * - Swagger API documentation at /api-docs
+ * - Authentication middleware for /api routes
+ * - PDF manipulation routes at /api/pdf
+ * - Global error handler
+ * 
+ * @example
+ * ```typescript
+ * const app = createApp();
+ * app.listen(3000, () => console.log('Server running'));
+ * ```
+ */
 export function createApp(): Express {
   const app = express();
 
