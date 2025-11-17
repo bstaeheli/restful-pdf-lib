@@ -1,0 +1,69 @@
+### Variables
+# @name loadEnv
+# @no-cookie-jar
+@baseUrl = http://localhost:3000
+@apiSecret = {{$dotenv API_SECRET}}
+
+### Health Check
+GET {{baseUrl}}/health
+
+### Extract Fields from PDF
+POST {{baseUrl}}/api/pdf/extract-fields
+Authorization: {{apiSecret}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="pdf"; filename="test-form.pdf"
+Content-Type: application/pdf
+
+< ./src/routes/__tests__/fixtures/test-form.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Fill PDF Form
+POST {{baseUrl}}/api/pdf/fill-form
+Authorization: {{apiSecret}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="pdf"; filename="test-form.pdf"
+Content-Type: application/pdf
+
+< ./src/routes/__tests__/fixtures/test-form.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="fields"
+Content-Type: application/json
+
+{
+  "txtGeburtsdatum": "15011985",
+  "txtAHV-Nr": "1234567890",
+  "1.2": "Mustermann",
+  "1.3": "Max",
+  "1.4": "Musterfirma Ltd.",
+  "txt_2_von": "01012024",
+  "txt_2_bis": "31122024",
+  "Kontrollkästchen 62": true,
+  "Kontrollkästchen 63": false,
+  "Optionsfeld 21": "Auswahl1"
+}
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Fill PDF Form (Alternative - Simple Example)
+POST {{baseUrl}}/api/pdf/fill-form
+Authorization: {{apiSecret}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="pdf"; filename="test-form.pdf"
+Content-Type: application/pdf
+
+< ./src/routes/__tests__/fixtures/test-form.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="fields"
+Content-Type: application/json
+
+{
+  "txtGeburtsdatum": "01011990",
+  "1.2": "Weber",
+  "1.3": "Anna"
+}
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
