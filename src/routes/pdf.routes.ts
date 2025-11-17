@@ -2,6 +2,9 @@ import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { PdfService } from '../services/pdf.service';
 
+// Type for multer files array
+type MulterFile = Express.Multer.File;
+
 const router = Router();
 
 // Configure multer with file size limit (10MB max)
@@ -148,17 +151,11 @@ router.post(
  *     description: |
  *       Upload a PDF file and JSON data to fill the form fields. Returns the filled PDF as a binary download.
  *       
- *       **Important for Swagger UI users:**
- *       If you get an "Invalid JSON" error, create a file named `fields.json` with your data and upload it:
- *       ```json
- *       {
- *         "fullName": "Anna Weber",
- *         "email": "anna.weber@example.ch",
- *         "phone": "+41 44 123 45 67",
- *         "agreeToTerms": true
- *       }
- *       ```
- *       Then use "Choose File" button for the fields parameter to upload this JSON file.
+ *       **For the "fields" parameter:**
+ *       Enter your JSON data as text directly in the text box.
+ *       Example: {"fullName":"Anna Weber","email":"anna.weber@example.ch","agreeToTerms":true}
+ *       
+ *       Note: If you experience issues with Swagger UI, you can also upload a .json file.
  *     tags:
  *       - PDF Operations
  *     security:
@@ -179,19 +176,8 @@ router.post(
  *                 description: PDF file with form fields to fill
  *               fields:
  *                 type: string
- *                 format: binary
- *                 description: |
- *                   JSON file or text containing field names and values to fill.
- *                   You can either:
- *                   1. Upload a .json file with the field data
- *                   2. Enter JSON text directly (may not work in all Swagger UI versions)
- *                   
- *                   Example content: {"fullName":"Anna Weber","email":"anna.weber@example.ch","phone":"+41 44 123 45 67","agreeToTerms":true,"country":"Switzerland","age":35}
- *           encoding:
- *             pdf:
- *               contentType: application/pdf
- *             fields:
- *               contentType: application/json
+ *                 description: JSON string with field names and values. Enter as text or upload as .json file.
+ *                 example: '{"fullName":"Anna Weber","email":"anna.weber@example.ch","phone":"+41 44 123 45 67","agreeToTerms":true,"country":"Switzerland","age":35}'
  *     responses:
  *       200:
  *         description: Successfully filled PDF form
@@ -256,7 +242,7 @@ router.post(
   upload.any(),
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const files = req.files as Express.Multer.File[];
+      const files = req.files as MulterFile[];
       
       // Find the PDF file
       const pdfFile = files?.find(f => f.fieldname === 'pdf');
