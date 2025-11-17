@@ -80,7 +80,10 @@ export class PdfService {
           }
         }
       } catch (error) {
-        console.warn(`Failed to set field "${fieldName}":`, error);
+        // Only log warnings in non-test environments
+        if (process.env.NODE_ENV !== 'test') {
+          console.warn(`Failed to set field "${fieldName}":`, error);
+        }
         // Continue with other fields even if one fails
       }
     }
