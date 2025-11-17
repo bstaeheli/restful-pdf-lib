@@ -115,6 +115,11 @@ const options: swaggerJsdoc.Options = {
               type: 'string',
               example: 'healthy',
             },
+            version: {
+              type: 'string',
+              description: 'Application version with build number',
+              example: '0.0.1+build.456',
+            },
             timestamp: {
               type: 'string',
               format: 'date-time',

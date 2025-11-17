@@ -4,6 +4,7 @@ import pdfRoutes from './routes/pdf.routes';
 import { authMiddleware } from './middleware/auth.middleware';
 import { errorHandler } from './middleware/error.middleware';
 import { swaggerSpec } from './config/swagger';
+import packageJson from '../package.json';
 
 /**
  * Creates and configures the Express application.
@@ -49,7 +50,11 @@ export function createApp(): Express {
    *               $ref: '#/components/schemas/HealthResponse'
    */
   app.get('/health', (_req, res) => {
-    res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+    res.json({ 
+      status: 'healthy', 
+      version: packageJson.version,
+      timestamp: new Date().toISOString() 
+    });
   });
 
   // Swagger UI
