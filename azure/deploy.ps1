@@ -38,7 +38,12 @@ Get-Content $envFilePath | ForEach-Object {
         $name = $matches[1].Trim()
         $value = $matches[2].Trim()
         [System.Environment]::SetEnvironmentVariable($name, $value)
-        Write-Host "  $name=$value"
+        # Don't display sensitive values
+        if ($name -eq "API_SECRET") {
+            Write-Host "  $name=***" -ForegroundColor Gray
+        } else {
+            Write-Host "  $name=$value" -ForegroundColor Gray
+        }
     }
 }
 
@@ -51,13 +56,20 @@ $storageAccountName = [System.Environment]::GetEnvironmentVariable("STORAGE_ACCO
 $apiSecret = [System.Environment]::GetEnvironmentVariable("API_SECRET")
 $apiBaseUrl = [System.Environment]::GetEnvironmentVariable("API_BASE_URL")
 
-az config set core.login_experience_v2=off # Disable the new login experience to avoid console prompts
-az login --tenant $tenantId
+Write-Host "`nStarting Azure deployment..." -ForegroundColor Cyan
 
+az config set core.login_experience_v2=off 2>$null
+Write-Host "Logging in to Azure..." -ForegroundColor Cyan
+az login --tenant $tenantId --output none
+
+Write-Host "Setting subscription..." -ForegroundColor Cyan
 az account set --subscription $subscriptionId
-az group create --name $resourceGroup --location $location
 
-az deployment group create `
+Write-Host "Creating resource group..." -ForegroundColor Cyan
+az group create --name $resourceGroup --location $location --output none
+
+Write-Host "Deploying infrastructure (this may take a few minutes)..." -ForegroundColor Cyan
+$deploymentResult = az deployment group create `
     --name pdf-lib-deployment `
     --resource-group $resourceGroup `
     --template-file main.bicep `
@@ -65,4 +77,41 @@ az deployment group create `
     storageAccountName=$storageAccountName `
     location=$location `
     apiSecret=$apiSecret `
-    apiBaseUrl=$apiBaseUrl
+    apiBaseUrl=$apiBaseUrl `
+    --output json 2>&1
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "`nDeployment failed!" -ForegroundColor Red
+    Write-Host $deploymentResult
+    exit 1
+}
+
+# Display summary
+Write-Host "`n╔══════════════════════════════════════════════════════════════════╗" -ForegroundColor Green
+Write-Host "║              Deployment Successful! 🎉                           ║" -ForegroundColor Green
+Write-Host "╚══════════════════════════════════════════════════════════════════╝" -ForegroundColor Green
+
+Write-Host "`nEnvironment: " -NoNewline
+Write-Host $($Environment ? $Environment : "default") -ForegroundColor Yellow
+
+Write-Host "Resource Group: " -NoNewline
+Write-Host $resourceGroup -ForegroundColor Yellow
+
+Write-Host "Location: " -NoNewline
+Write-Host $location -ForegroundColor Yellow
+
+Write-Host "`n📍 Service Endpoints:" -ForegroundColor Cyan
+$baseUrl = "https://$apiBaseUrl"
+Write-Host "   API Base:      " -NoNewline
+Write-Host $baseUrl -ForegroundColor White
+
+Write-Host "   API Docs:      " -NoNewline
+Write-Host "$baseUrl/api-docs" -ForegroundColor White
+
+Write-Host "   Health Check:  " -NoNewline
+Write-Host "$baseUrl/health" -ForegroundColor White
+
+Write-Host "`n💡 Note: HTTPS certificate will be automatically provisioned by Caddy (may take 1-2 minutes)" -ForegroundColor Gray
+
+Write-Host "`nTest your deployment:" -ForegroundColor Cyan
+Write-Host "  curl $baseUrl/health" -ForegroundColor Gray
