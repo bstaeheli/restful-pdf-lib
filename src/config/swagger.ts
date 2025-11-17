@@ -89,6 +89,25 @@ const options: swaggerJsdoc.Options = {
           },
           required: ['fields'],
         },
+        FillFormFieldsData: {
+          type: 'object',
+          description: 'Field names and values to fill in the PDF form. Keys are field names, values can be strings, booleans, or numbers.',
+          additionalProperties: {
+            oneOf: [
+              { type: 'string' },
+              { type: 'boolean' },
+              { type: 'number' },
+            ],
+          },
+          example: {
+            fullName: 'Anna Weber',
+            email: 'anna.weber@example.ch',
+            phone: '+41 44 123 45 67',
+            agreeToTerms: true,
+            country: 'Switzerland',
+            age: 35,
+          },
+        },
         HealthResponse: {
           type: 'object',
           properties: {

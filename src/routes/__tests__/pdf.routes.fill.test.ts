@@ -2,6 +2,7 @@ import request from 'supertest';
 import { Express } from 'express';
 import { createApp } from '../../app';
 import { PDFDocument } from 'pdf-lib';
+import { setupOpenAPIValidation } from '../../test-utils/openapi-validator';
 
 describe('PDF Routes - Fill Form', () => {
   let app: Express;
@@ -9,6 +10,7 @@ describe('PDF Routes - Fill Form', () => {
   beforeAll(() => {
     process.env.API_SECRET = 'test-secret-123';
     app = createApp();
+    setupOpenAPIValidation();
   });
 
   describe('POST /api/pdf/fill-form', () => {
@@ -19,6 +21,7 @@ describe('PDF Routes - Fill Form', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.error).toContain('No PDF file uploaded');
+      expect(response).toSatisfyApiSpec();
     });
 
     it('should return 400 when no fields data is provided', async () => {
@@ -36,6 +39,7 @@ describe('PDF Routes - Fill Form', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.error).toContain('Missing "fields" data');
+      expect(response).toSatisfyApiSpec();
     });
 
     it('should return 400 when fields data is invalid JSON', async () => {
@@ -54,6 +58,7 @@ describe('PDF Routes - Fill Form', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.error).toContain('Invalid JSON');
+      expect(response).toSatisfyApiSpec();
     });
 
     it('should fill form fields and return PDF', async () => {
@@ -98,6 +103,10 @@ describe('PDF Routes - Fill Form', () => {
 
       const filledCheckbox = filledForm.getCheckBox('agree');
       expect(filledCheckbox.isChecked()).toBe(true);
+      
+      // Note: Binary PDF responses cannot be validated against OpenAPI spec
+      // but we verify status and headers which are part of the spec
+      expect(response.status).toBe(200);
     });
 
     it('should handle non-existent field names gracefully', async () => {
@@ -141,6 +150,7 @@ describe('PDF Routes - Fill Form', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.error).toContain('PDF');
+      expect(response).toSatisfyApiSpec();
     });
 
     it('should return 500 when PDF processing fails', async () => {
@@ -160,6 +170,7 @@ describe('PDF Routes - Fill Form', () => {
       expect(response.body).toHaveProperty('error');
       expect(response.body.error).toContain('Failed to fill PDF form');
       expect(response.body).toHaveProperty('details');
+      expect(response).toSatisfyApiSpec();
     });
   });
 });

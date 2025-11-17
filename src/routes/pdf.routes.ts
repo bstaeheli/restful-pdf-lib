@@ -59,15 +59,15 @@ const pdfService = new PdfService();
  *               fields:
  *                 - name: "fullName"
  *                   type: "text"
- *                   value: "John Doe"
+ *                   value: "Hans Müller"
  *                   maxLength: 100
  *                 - name: "agreeToTerms"
  *                   type: "checkbox"
  *                   value: true
  *                 - name: "country"
  *                   type: "dropdown"
- *                   value: "USA"
- *                   options: ["USA", "Canada", "Mexico"]
+ *                   value: "Switzerland"
+ *                   options: ["Switzerland", "Germany", "Austria", "France"]
  *       400:
  *         description: Bad request - missing file or invalid PDF
  *         content:
@@ -158,8 +158,11 @@ router.post(
  *                 description: PDF file with form fields to fill
  *               fields:
  *                 type: string
- *                 description: JSON object containing field names and values to fill
- *                 example: '{"fullName":"Jane Smith","email":"jane@example.com","agreeToTerms":true}'
+ *                 description: |
+ *                   JSON string containing field names and values to fill.
+ *                   The JSON object should conform to the FillFormFieldsData schema.
+ *                   Due to multipart/form-data encoding, this must be sent as a JSON string.
+ *                 example: '{"fullName":"Anna Weber","email":"anna.weber@example.ch","phone":"+41 44 123 45 67","agreeToTerms":true,"country":"Switzerland","age":35}'
  *           encoding:
  *             pdf:
  *               contentType: application/pdf

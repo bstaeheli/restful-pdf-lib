@@ -3,6 +3,7 @@ import { Express } from 'express';
 import { createApp } from '../../app';
 import * as fs from 'fs';
 import * as path from 'path';
+import { setupOpenAPIValidation } from '../../test-utils/openapi-validator';
 
 describe('PDF Routes - End-to-End Integration', () => {
   let app: Express;
@@ -29,6 +30,7 @@ describe('PDF Routes - End-to-End Integration', () => {
   beforeAll(() => {
     process.env.API_SECRET = 'test-secret-e2e';
     app = createApp();
+    setupOpenAPIValidation();
     
     // Ensure output directory exists
     if (!fs.existsSync(outputDir)) {
@@ -65,6 +67,7 @@ describe('PDF Routes - End-to-End Integration', () => {
       expect(response.body).toHaveProperty('fields');
       expect(Array.isArray(response.body.fields)).toBe(true);
       expect(response.body.fields.length).toBeGreaterThan(100);
+      expect(response).toSatisfyApiSpec();
 
       // Verify that the fields we want to fill exist
       const fieldNames = response.body.fields.map((f: { name: string }) => f.name);
@@ -115,6 +118,7 @@ describe('PDF Routes - End-to-End Integration', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('fields');
+      expect(response).toSatisfyApiSpec();
 
       const fields = response.body.fields;
 
@@ -165,6 +169,7 @@ describe('PDF Routes - End-to-End Integration', () => {
         .set('Authorization', 'test-secret-e2e')
         .attach('pdf', response.body, 'filled.pdf');
 
+      expect(extractResponse).toSatisfyApiSpec();
       for (const [fieldName, expectedValue] of Object.entries(partialData.expectedResults)) {
         const field = extractResponse.body.fields.find(
           (f: { name: string }) => f.name === fieldName
@@ -223,6 +228,7 @@ describe('PDF Routes - End-to-End Integration', () => {
         .set('Authorization', 'test-secret-e2e')
         .attach('pdf', response.body, 'filled.pdf');
 
+      expect(extractResponse).toSatisfyApiSpec();
       for (const [fieldName, expectedValue] of Object.entries(invalidFieldsData.expectedResults)) {
         const field = extractResponse.body.fields.find(
           (f: { name: string }) => f.name === fieldName

@@ -2,6 +2,7 @@ import request from 'supertest';
 import { Express } from 'express';
 import { createApp } from '../../app';
 import { PDFDocument } from 'pdf-lib';
+import { setupOpenAPIValidation } from '../../test-utils/openapi-validator';
 
 describe('PDF Routes - Extract Fields', () => {
   let app: Express;
@@ -9,6 +10,7 @@ describe('PDF Routes - Extract Fields', () => {
   beforeAll(() => {
     process.env.API_SECRET = 'test-secret-123';
     app = createApp();
+    setupOpenAPIValidation();
   });
 
   describe('POST /api/pdf/extract-fields', () => {
@@ -19,6 +21,7 @@ describe('PDF Routes - Extract Fields', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.error).toContain('No PDF file uploaded');
+      expect(response).toSatisfyApiSpec();
     });
 
     it('should return 400 when non-PDF file is uploaded', async () => {
@@ -32,6 +35,7 @@ describe('PDF Routes - Extract Fields', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.error).toContain('PDF');
+      expect(response).toSatisfyApiSpec();
     });
 
     it('should extract form fields from a valid PDF', async () => {
@@ -76,6 +80,7 @@ describe('PDF Routes - Extract Fields', () => {
       expect(checkboxResult).toBeDefined();
       expect(checkboxResult.type).toBe('checkbox');
       expect(checkboxResult.value).toBe(true);
+      expect(response).toSatisfyApiSpec();
     });
 
     it('should return 500 when PDF extraction fails', async () => {
@@ -94,6 +99,7 @@ describe('PDF Routes - Extract Fields', () => {
       expect(response.body).toHaveProperty('error');
       expect(response.body.error).toContain('Failed to extract PDF form fields');
       expect(response.body).toHaveProperty('details');
+      expect(response).toSatisfyApiSpec();
     });
   });
 });
