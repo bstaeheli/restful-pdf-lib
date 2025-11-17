@@ -1,8 +1,7 @@
 {
   "description": "Test data for Swiss employment certificate form (Arbeitgeberbescheinigung)",
   "fields": {
-    "txtGeburtsdatum": "15011985",
-    "txtAHV-Nr": "1234567890",
+    "txtGeburtsdatum": "15011985"
     "1.2": "Mustermann",
     "1.3": "Max",
     "1.4": "Musterfirma Ltd.",
@@ -14,7 +13,6 @@
   },
   "expectedResults": {
     "txtGeburtsdatum": "15011985",
-    "txtAHV-Nr": "1234567890",
     "1.2": "Mustermann",
     "1.3": "Max",
     "1.4": "Musterfirma Ltd.",

@@ -12,7 +12,7 @@ This directory contains test data and sample files for the PDF service tests.
 ### Test Data (JSON)
 
 - **test-form-data.json** - Complete test data for filling the employment certificate
-  - Includes personal data (name, birth date, AHV number)
+  - Includes personal data (name, birth date)
   - Includes employment dates
   - Includes checkbox and radio button selections
 
