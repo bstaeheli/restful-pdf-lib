@@ -21,5 +21,13 @@ module.exports = {
     },
   },
   coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov', 'cobertura'],
+  reporters: [
+    'default',
+    ['jest-junit', {
+      outputDirectory: '.',
+      outputName: 'junit.xml',
+    }],
+  ],
   verbose: true,
 };
