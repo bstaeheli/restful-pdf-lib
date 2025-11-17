@@ -20,7 +20,7 @@ const options: swaggerJsdoc.Options = {
         description: 'Development server',
       },
       {
-        url: 'https://your-domain.azurecontainer.io',
+        url: process.env.API_BASE_URL || 'https://your-domain.azurecontainer.io',
         description: 'Production server',
       },
     ],
@@ -116,7 +116,12 @@ const options: swaggerJsdoc.Options = {
     },
     security: [],
   },
-  apis: ['./src/routes/*.ts', './src/app.ts'],
+  apis: [
+    './src/routes/*.ts',
+    './src/app.ts',
+    './dist/routes/*.js',
+    './dist/app.js',
+  ],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
