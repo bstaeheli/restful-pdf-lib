@@ -29,6 +29,11 @@ describe('PDF Routes - End-to-End Integration', () => {
   beforeAll(() => {
     process.env.API_SECRET = 'test-secret-e2e';
     app = createApp();
+    
+    // Ensure output directory exists
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
   });
 
   describe('Complete workflow: Fill PDF and verify fields', () => {
