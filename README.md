@@ -2,7 +2,27 @@
 
 ![Docker Build](https://github.com/bstaeheli/restful-pdf-lib/actions/workflows/docker-publish.yml/badge.svg)
 
-A REST API for PDF manipulation using [pdf-lib](https://pdf-lib.js.org). Extract form fields and fill PDF forms via HTTP endpoints.
+A REST API for PDF manipulation using [pdf-lib](https://pdf-lib.js.org).
+
+**Features:**
+- 📄 Extract form fields from PDFs
+- ✍️ Fill PDF forms with data
+- 🔒 Secure authentication
+- 🐳 Docker ready
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [API Endpoints](#api-endpoints)
+  - [Extract PDF Fields](#extract-pdf-fields)
+  - [Fill PDF Form](#fill-pdf-form)
+  - [Health Check](#health-check-no-auth)
+- [Docker](#docker)
+- [Azure Deployment](#azure-deployment)
+- [Development](#development)
+- [Environment Variables](#environment-variables)
+- [Tech Stack](#tech-stack)
+- [License](#license)
 
 ## Quick Start
 
