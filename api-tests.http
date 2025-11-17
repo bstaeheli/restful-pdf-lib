@@ -1,8 +1,7 @@
 ### Variables
-# @name loadEnv
-# @no-cookie-jar
-@baseUrl = http://localhost:3000
-@apiSecret = {{$dotenv API_SECRET}}
+# Select environment: Ctrl+Alt+E (Windows/Linux) or Cmd+Alt+E (Mac)
+# Available environments: local, dev, staging, production
+# Variables are defined in .vscode/settings.json
 
 ### Health Check
 GET {{baseUrl}}/health
@@ -34,7 +33,7 @@ Content-Disposition: form-data; name="fields"
 Content-Type: application/json
 
 {
-  "txtGeburtsdatum": "15011985"
+  "txtGeburtsdatum": "15011985",
   "1.2": "Mustermann",
   "1.3": "Max",
   "1.4": "Musterfirma Ltd.",
