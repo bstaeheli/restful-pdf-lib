@@ -29,6 +29,9 @@ const pdfService = new PdfService();
  *                 type: string
  *                 format: binary
  *                 description: PDF file to extract form fields from
+ *           encoding:
+ *             pdf:
+ *               contentType: application/pdf
  *     responses:
  *       200:
  *         description: Successfully extracted form fields
@@ -141,6 +144,11 @@ router.post(
  *                 type: string
  *                 description: JSON object containing field names and values to fill
  *                 example: '{"fullName":"Jane Smith","email":"jane@example.com","agreeToTerms":true}'
+ *           encoding:
+ *             pdf:
+ *               contentType: application/pdf
+ *             fields:
+ *               contentType: application/json
  *     responses:
  *       200:
  *         description: Successfully filled PDF form
