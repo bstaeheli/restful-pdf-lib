@@ -228,7 +228,7 @@ router.post(
         fieldData = typeof req.body.fields === 'string' 
           ? JSON.parse(req.body.fields) 
           : req.body.fields;
-      } catch (error) {
+      } catch {
         res.status(400).json({ 
           error: 'Invalid JSON in "fields" parameter' 
         });
