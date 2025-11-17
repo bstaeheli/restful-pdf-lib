@@ -9,13 +9,17 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB in bytes
+    fields: 10, // Allow up to 10 non-file fields
+    files: 1, // Only 1 file allowed
   },
   fileFilter: (_req, file, cb) => {
-    // Additional validation at multer level
-    if (file.mimetype === 'application/pdf') {
+    // Only accept PDF files and only for the 'pdf' field
+    if (file.fieldname === 'pdf' && file.mimetype === 'application/pdf') {
       cb(null, true);
-    } else {
+    } else if (file.fieldname === 'pdf') {
       cb(new Error('Only PDF files are allowed'));
+    } else {
+      cb(new Error(`Unexpected file field: ${file.fieldname}`));
     }
   },
 });
