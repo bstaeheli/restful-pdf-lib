@@ -69,13 +69,31 @@ const pdfService = new PdfService();
  *                   type: "text"
  *                   value: "Hans Müller"
  *                   maxLength: 100
+ *                   position:
+ *                     pageIndex: 0
+ *                     x: 3.53
+ *                     y: 24.69
+ *                     width: 7.06
+ *                     height: 0.71
  *                 - name: "agreeToTerms"
  *                   type: "checkbox"
  *                   value: true
+ *                   position:
+ *                     pageIndex: 0
+ *                     x: 2.12
+ *                     y: 18.50
+ *                     width: 0.53
+ *                     height: 0.53
  *                 - name: "country"
  *                   type: "dropdown"
  *                   value: "Switzerland"
  *                   options: ["Switzerland", "Germany", "Austria", "France"]
+ *                   position:
+ *                     pageIndex: 0
+ *                     x: 5.29
+ *                     y: 12.35
+ *                     width: 8.47
+ *                     height: 0.88
  *       400:
  *         description: Bad request - missing file or invalid PDF
  *         content:
