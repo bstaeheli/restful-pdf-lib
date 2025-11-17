@@ -1,6 +1,13 @@
 import { PDFDocument, PDFTextField, PDFCheckBox, PDFRadioGroup, PDFDropdown } from 'pdf-lib';
 import { PdfFormField } from '../types/pdf.types';
 
+// Internal type for fields with sorting metadata
+interface PdfFormFieldWithSort extends PdfFormField {
+  _pageIndex: number;
+  _y: number;
+  _x: number;
+}
+
 /**
  * Service class for PDF manipulation operations using pdf-lib.
  * Provides methods to extract form fields and fill PDF forms.
@@ -28,7 +35,7 @@ export class PdfService {
     // Conversion factor: PDF points to centimeters
     const POINTS_TO_CM = 0.0352778;
     
-    const extractedFields: PdfFormField[] = [];
+    const extractedFields: PdfFormFieldWithSort[] = [];
 
     for (const field of fields) {
       const fieldName = field.getName();
@@ -45,28 +52,31 @@ export class PdfService {
       let height = 0;
 
       try {
-        const widgets = (field as any).acroField?.getWidgets?.();
-        const firstWidget = widgets?.[0];
+        // Access internal acroField API (not in public types)
+        const widgets = (field as { acroField?: { getWidgets?: () => unknown[] } }).acroField?.getWidgets?.();
+        const firstWidget = widgets?.[0] as { dict?: unknown; getRectangle?: () => { x: number; y: number; width: number; height: number } } | undefined;
 
         if (firstWidget) {
           // Find which page this widget is on
           const pages = pdfDoc.getPages();
           for (let i = 0; i < pages.length; i++) {
             const annots = pages[i].node.Annots();
-            if (annots && annots.asArray().includes(firstWidget.dict)) {
+            if (annots && firstWidget.dict && annots.asArray().includes(firstWidget.dict as never)) {
               pageIndex = i;
               break;
             }
           }
 
           // Get widget position (rectangle)
-          const rect = firstWidget.getRectangle();
-          x = rect.x;
-          y = rect.y;
-          width = rect.width;
-          height = rect.height;
+          if (firstWidget.getRectangle) {
+            const rect = firstWidget.getRectangle();
+            x = rect.x;
+            y = rect.y;
+            width = rect.width;
+            height = rect.height;
+          }
         }
-      } catch (error) {
+      } catch {
         // If position extraction fails, use defaults (0,0,0,0)
         // This allows the API to still work even if position can't be determined
       }
@@ -105,11 +115,11 @@ export class PdfService {
         _pageIndex: pageIndex,
         _y: y,
         _x: x
-      } as PdfFormField & { _pageIndex: number; _y: number; _x: number });
+      });
     }
 
     // Sort by page (ascending), then Y-position (descending for top-to-bottom), then X-position (ascending for left-to-right)
-    extractedFields.sort((a: any, b: any) => {
+    extractedFields.sort((a, b) => {
       if (a._pageIndex !== b._pageIndex) {
         return a._pageIndex - b._pageIndex; // Earlier pages first
       }
@@ -120,7 +130,7 @@ export class PdfService {
     });
 
     // Remove internal sorting metadata before returning (keep position)
-    return extractedFields.map(({ _pageIndex, _y, _x, ...field }: any) => field);
+    return extractedFields.map(({ _pageIndex, _y, _x, ...field }) => field);
   }
 
   /**

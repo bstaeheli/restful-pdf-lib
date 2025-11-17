@@ -2,9 +2,6 @@ import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { PdfService } from '../services/pdf.service';
 
-// Type for multer files array
-type MulterFile = Express.Multer.File;
-
 const router = Router();
 
 // Configure multer with file size limit (10MB max)
@@ -242,7 +239,7 @@ router.post(
   upload.any(),
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const files = req.files as MulterFile[];
+      const files = req.files as Express.Multer.File[] | undefined;
       
       // Find the PDF file
       const pdfFile = files?.find(f => f.fieldname === 'pdf');
