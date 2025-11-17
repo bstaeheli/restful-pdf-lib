@@ -1,5 +1,15 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 
+// Get base URL and ensure it has protocol
+const getServerUrl = (): string => {
+  const baseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
+  // If URL doesn't start with http:// or https://, assume https://
+  if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+    return `https://${baseUrl}`;
+  }
+  return baseUrl;
+};
+
 const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
@@ -16,7 +26,7 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: process.env.API_BASE_URL || 'http://localhost:3000',
+        url: getServerUrl(),
         description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server',
       },
     ],

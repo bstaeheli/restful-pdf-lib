@@ -101,7 +101,7 @@ Write-Host "Location: " -NoNewline
 Write-Host $location -ForegroundColor Yellow
 
 Write-Host "`n📍 Service Endpoints:" -ForegroundColor Cyan
-$baseUrl = "https://$apiBaseUrl"
+$baseUrl = "$apiBaseUrl"
 Write-Host "   API Base:      " -NoNewline
 Write-Host $baseUrl -ForegroundColor White
 
