@@ -1,49 +1,38 @@
 # RESTful PDF Library
 
-![Docker Build](https://github.com/<your-username>/restful-pdf-lib/actions/workflows/docker-publish.yml/badge.svg)
+![Docker Build](https://github.com/bstaeheli/restful-pdf-lib/actions/workflows/docker-publish.yml/badge.svg)
 
-A REST API web service for PDF manipulation using [pdf-lib](https://pdf-lib.js.org). Extract form fields from PDFs and fill PDF forms with data via simple HTTP endpoints.
-
-## Features
-
-- 📄 **PDF Form Field Extraction** - Get all form fields as JSON
-- ✍️ **PDF Form Filling** - Fill forms with JSON data
-- 🔒 **Secret-based Authentication** - Secure API access
-- 🐳 **Docker Ready** - Multi-platform container support
-- 🚀 **CI/CD Pipeline** - Automated builds via GitHub Actions
-- 📚 **Interactive API Docs** - Built-in Swagger UI
+A REST API for PDF manipulation using [pdf-lib](https://pdf-lib.js.org). Extract form fields and fill PDF forms via HTTP endpoints.
 
 ## Quick Start
 
 ```bash
-# Clone and install
-git clone <repository-url>
+# Install
+git clone https://github.com/bstaeheli/restful-pdf-lib.git
 cd restful-pdf-lib
 npm install
 
 # Configure
 cp .env.example .env
-# Edit .env and set API_SECRET
+# Edit .env and set API_SECRET (generate with: openssl rand -base64 32)
 
 # Run
 npm run dev
 ```
 
-Service runs at `http://localhost:3000`  
-API documentation at `http://localhost:3000/api-docs`
+🌐 **Service:** `http://localhost:3000`  
+📚 **API Docs:** `http://localhost:3000/api-docs`
 
-## Usage Examples
+## API Endpoints
 
-### Extract Fields
-
+### Extract PDF Fields
 ```bash
 curl -X POST http://localhost:3000/api/pdf/extract-fields \
   -H "Authorization: your-secret" \
   -F "pdf=@form.pdf"
 ```
 
-### Fill Form
-
+### Fill PDF Form
 ```bash
 curl -X POST http://localhost:3000/api/pdf/fill-form \
   -H "Authorization: your-secret" \
@@ -52,87 +41,67 @@ curl -X POST http://localhost:3000/api/pdf/fill-form \
   --output filled.pdf
 ```
 
+### Health Check (no auth)
+```bash
+curl http://localhost:3000/health
+```
+
 ## Docker
 
 ```bash
-# Using pre-built image
-docker pull ghcr.io/<your-username>/restful-pdf-lib:latest
-docker run -p 3000:3000 -e API_SECRET=your-secret ghcr.io/<your-username>/restful-pdf-lib:latest
+# Use pre-built image
+docker pull ghcr.io/bstaeheli/restful-pdf-lib:latest
+docker run -p 3000:3000 -e API_SECRET=your-secret ghcr.io/bstaeheli/restful-pdf-lib:latest
 
 # Or build locally
-npm run docker:build
-npm run docker:run
+docker build -t restful-pdf-lib .
+docker run -p 3000:3000 -e API_SECRET=your-secret restful-pdf-lib
 ```
 
-## Documentation
+## Azure Deployment
 
-📖 **[Complete Documentation](docs/README.md)**
-
-### Guides
-- [Quick Start Guide](docs/guides/quickstart.md) - Detailed setup instructions
-- [API Reference](docs/guides/api-reference.md) - Complete endpoint documentation
-- [Swagger UI Guide](docs/guides/swagger.md) - Interactive API testing
-- [Configuration](docs/guides/configuration.md) - Environment and settings
-- [Troubleshooting](docs/guides/troubleshooting.md) - Common issues and solutions
-
-### Deployment
-- [Docker Deployment](docs/deployment/docker.md) - Container setup
-- [GitHub Actions CI/CD](docs/deployment/github-actions.md) - Automated pipeline
-- [Azure Deployment](docs/deployment/azure.md) - Cloud deployment guide
-- [Deployment Checklist](docs/deployment/checklist.md) - Pre-deployment verification
-
-## Technology Stack
-
-- **Runtime:** Node.js 20+ with TypeScript
-- **Framework:** Express.js
-- **PDF Library:** pdf-lib (MIT License)
-- **Testing:** Jest with Supertest
-- **Container:** Docker (multi-platform support)
-- **CI/CD:** GitHub Actions
+```bash
+az container create \
+  --resource-group myResourceGroup \
+  --name restful-pdf-lib \
+  --image ghcr.io/bstaeheli/restful-pdf-lib:latest \
+  --cpu 1 --memory 1 \
+  --dns-name-label pdf-service \
+  --ports 3000 \
+  --environment-variables NODE_ENV=production PORT=3000 \
+  --secure-environment-variables API_SECRET=your-secret
+```
 
 ## Development
 
 ```bash
-npm run dev              # Start development server
+npm run dev              # Start with hot reload
 npm test                 # Run tests
-npm run test:coverage    # Generate coverage report
+npm run test:coverage    # Coverage report
 npm run build            # Build for production
 npm run lint             # Check code style
 ```
 
-## Project Structure
+## Environment Variables
 
-```
-restful-pdf-lib/
-├── src/
-│   ├── routes/         # API endpoints
-│   ├── services/       # PDF processing logic
-│   ├── middleware/     # Auth & error handling
-│   └── types/          # TypeScript definitions
-├── docs/               # Documentation
-├── Dockerfile          # Container configuration
-└── package.json        # Dependencies
-```
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `API_SECRET` | Yes | - | Authentication token |
+| `PORT` | No | 3000 | Server port |
+| `NODE_ENV` | No | production | Environment mode |
+
+## Tech Stack
+
+- **Node.js 20+** with TypeScript
+- **Express.js** - Web framework
+- **pdf-lib** - PDF manipulation (MIT)
+- **Jest** - Testing
+- **Docker** - Containerization
+- **GitHub Actions** - CI/CD
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-All dependencies use permissive open-source licenses (MIT, Apache-2.0).  
-See [License Verification](docs/LICENSE-VERIFICATION.md) for details.
-
-## Contributing
-
-1. Ensure all tests pass: `npm test`
-2. Follow existing code style
-3. Use English for code and documentation
-4. Maintain test coverage
-
-## Support
-
-- 📖 Check [documentation](docs/README.md)
-- 🐛 Review [troubleshooting guide](docs/guides/troubleshooting.md)
-- 💬 Open an issue for bugs or questions
+MIT - See [LICENSE](LICENSE) file
 ```
 
 ## API Documentation
