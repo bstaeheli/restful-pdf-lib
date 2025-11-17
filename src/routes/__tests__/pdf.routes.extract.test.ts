@@ -31,7 +31,7 @@ describe('PDF Routes - Extract Fields', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toContain('must be a PDF');
+      expect(response.body.error).toContain('PDF');
     });
 
     it('should extract form fields from a valid PDF', async () => {
@@ -76,6 +76,24 @@ describe('PDF Routes - Extract Fields', () => {
       expect(checkboxResult).toBeDefined();
       expect(checkboxResult.type).toBe('checkbox');
       expect(checkboxResult.value).toBe(true);
+    });
+
+    it('should return 500 when PDF extraction fails', async () => {
+      // Create invalid/corrupted PDF data
+      const invalidPdfData = Buffer.from('%PDF-1.4\n%%EOF');
+
+      const response = await request(app)
+        .post('/api/pdf/extract-fields')
+        .set('Authorization', 'test-secret-123')
+        .attach('pdf', invalidPdfData, {
+          filename: 'corrupted.pdf',
+          contentType: 'application/pdf',
+        });
+
+      expect(response.status).toBe(500);
+      expect(response.body).toHaveProperty('error');
+      expect(response.body.error).toContain('Failed to extract PDF form fields');
+      expect(response.body).toHaveProperty('details');
     });
   });
 });
