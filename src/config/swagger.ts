@@ -75,6 +75,38 @@ const options: swaggerJsdoc.Options = {
               description: 'Maximum length for text fields',
               example: 100,
             },
+            position: {
+              type: 'object',
+              description: 'Position of the field on the PDF page',
+              properties: {
+                pageIndex: {
+                  type: 'number',
+                  description: 'Zero-based page index',
+                  example: 0,
+                },
+                x: {
+                  type: 'number',
+                  description: 'X-coordinate (left position) in centimeters',
+                  example: 3.53,
+                },
+                y: {
+                  type: 'number',
+                  description: 'Y-coordinate (bottom position) in centimeters',
+                  example: 24.69,
+                },
+                width: {
+                  type: 'number',
+                  description: 'Width of the field in centimeters',
+                  example: 7.06,
+                },
+                height: {
+                  type: 'number',
+                  description: 'Height of the field in centimeters',
+                  example: 0.71,
+                },
+              },
+              required: ['pageIndex', 'x', 'y', 'width', 'height'],
+            },
           },
           required: ['name', 'type'],
         },

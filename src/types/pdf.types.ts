@@ -4,6 +4,13 @@ export interface PdfFormField {
   value?: string | boolean | number;
   options?: string[];
   maxLength?: number;
+  position?: {
+    pageIndex: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
 }
 
 export interface FillFormRequest {

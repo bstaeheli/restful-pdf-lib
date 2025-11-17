@@ -25,6 +25,9 @@ export class PdfService {
     const form = pdfDoc.getForm();
     const fields = form.getFields();
     
+    // Conversion factor: PDF points to centimeters
+    const POINTS_TO_CM = 0.0352778;
+    
     const extractedFields: PdfFormField[] = [];
 
     for (const field of fields) {
@@ -33,6 +36,40 @@ export class PdfService {
       let fieldValue: string | boolean | number | undefined;
       let options: string[] | undefined;
       let maxLength: number | undefined;
+
+      // Get field position for sorting
+      let pageIndex = 0;
+      let y = 0;
+      let x = 0;
+      let width = 0;
+      let height = 0;
+
+      try {
+        const widgets = (field as any).acroField?.getWidgets?.();
+        const firstWidget = widgets?.[0];
+
+        if (firstWidget) {
+          // Find which page this widget is on
+          const pages = pdfDoc.getPages();
+          for (let i = 0; i < pages.length; i++) {
+            const annots = pages[i].node.Annots();
+            if (annots && annots.asArray().includes(firstWidget.dict)) {
+              pageIndex = i;
+              break;
+            }
+          }
+
+          // Get widget position (rectangle)
+          const rect = firstWidget.getRectangle();
+          x = rect.x;
+          y = rect.y;
+          width = rect.width;
+          height = rect.height;
+        }
+      } catch (error) {
+        // If position extraction fails, use defaults (0,0,0,0)
+        // This allows the API to still work even if position can't be determined
+      }
 
       if (field instanceof PDFTextField) {
         fieldType = 'text';
@@ -56,11 +93,34 @@ export class PdfService {
         type: fieldType,
         value: fieldValue,
         ...(options && { options }),
-        ...(maxLength && { maxLength })
-      });
+        ...(maxLength && { maxLength }),
+        position: {
+          pageIndex,
+          x: Math.round(x * POINTS_TO_CM * 100) / 100, // Convert to cm, round to 2 decimals
+          y: Math.round(y * POINTS_TO_CM * 100) / 100,
+          width: Math.round(width * POINTS_TO_CM * 100) / 100,
+          height: Math.round(height * POINTS_TO_CM * 100) / 100
+        },
+        // Store for sorting
+        _pageIndex: pageIndex,
+        _y: y,
+        _x: x
+      } as PdfFormField & { _pageIndex: number; _y: number; _x: number });
     }
 
-    return extractedFields;
+    // Sort by page (ascending), then Y-position (descending for top-to-bottom), then X-position (ascending for left-to-right)
+    extractedFields.sort((a: any, b: any) => {
+      if (a._pageIndex !== b._pageIndex) {
+        return a._pageIndex - b._pageIndex; // Earlier pages first
+      }
+      if (Math.abs(a._y - b._y) > 10) { // Allow 10 point tolerance for "same row"
+        return b._y - a._y; // Higher Y values first (PDF coordinates: top = higher Y)
+      }
+      return a._x - b._x; // Left to right
+    });
+
+    // Remove internal sorting metadata before returning (keep position)
+    return extractedFields.map(({ _pageIndex, _y, _x, ...field }: any) => field);
   }
 
   /**
