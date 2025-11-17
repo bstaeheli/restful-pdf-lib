@@ -3,7 +3,23 @@ import multer from 'multer';
 import { PdfService } from '../services/pdf.service';
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage() });
+
+// Configure multer with file size limit (10MB max)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB in bytes
+  },
+  fileFilter: (_req, file, cb) => {
+    // Additional validation at multer level
+    if (file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF files are allowed'));
+    }
+  },
+});
+
 const pdfService = new PdfService();
 
 /**
@@ -228,7 +244,7 @@ router.post(
         fieldData = typeof req.body.fields === 'string' 
           ? JSON.parse(req.body.fields) 
           : req.body.fields;
-      } catch (error) {
+      } catch {
         res.status(400).json({ 
           error: 'Invalid JSON in "fields" parameter' 
         });

@@ -128,5 +128,38 @@ describe('PDF Routes - Fill Form', () => {
       expect(response.status).toBe(200);
       expect(response.headers['content-type']).toBe('application/pdf');
     });
+
+    it('should return 400 when file is not a PDF (wrong mimetype)', async () => {
+      const response = await request(app)
+        .post('/api/pdf/fill-form')
+        .set('Authorization', 'test-secret-123')
+        .field('fields', JSON.stringify({ test: 'value' }))
+        .attach('pdf', Buffer.from('not a pdf'), {
+          filename: 'test.txt',
+          contentType: 'text/plain',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('PDF');
+    });
+
+    it('should return 500 when PDF processing fails', async () => {
+      // Create invalid/corrupted PDF data
+      const invalidPdfData = Buffer.from('%PDF-1.4\n%%EOF');
+
+      const response = await request(app)
+        .post('/api/pdf/fill-form')
+        .set('Authorization', 'test-secret-123')
+        .field('fields', JSON.stringify({ test: 'value' }))
+        .attach('pdf', invalidPdfData, {
+          filename: 'corrupted.pdf',
+          contentType: 'application/pdf',
+        });
+
+      expect(response.status).toBe(500);
+      expect(response.body).toHaveProperty('error');
+      expect(response.body.error).toContain('Failed to fill PDF form');
+      expect(response.body).toHaveProperty('details');
+    });
   });
 });
