@@ -145,7 +145,20 @@ router.post(
  * /api/pdf/fill-form:
  *   post:
  *     summary: Fill a PDF form with data
- *     description: Upload a PDF file and JSON data to fill the form fields. Returns the filled PDF as a binary download.
+ *     description: |
+ *       Upload a PDF file and JSON data to fill the form fields. Returns the filled PDF as a binary download.
+ *       
+ *       **Important for Swagger UI users:**
+ *       If you get an "Invalid JSON" error, create a file named `fields.json` with your data and upload it:
+ *       ```json
+ *       {
+ *         "fullName": "Anna Weber",
+ *         "email": "anna.weber@example.ch",
+ *         "phone": "+41 44 123 45 67",
+ *         "agreeToTerms": true
+ *       }
+ *       ```
+ *       Then use "Choose File" button for the fields parameter to upload this JSON file.
  *     tags:
  *       - PDF Operations
  *     security:
@@ -166,16 +179,19 @@ router.post(
  *                 description: PDF file with form fields to fill
  *               fields:
  *                 type: string
+ *                 format: binary
  *                 description: |
- *                   JSON string containing field names and values to fill.
- *                   The JSON object should conform to the FillFormFieldsData schema.
- *                   This is a TEXT field, not a file upload. Enter the JSON directly.
- *                 example: '{"fullName":"Anna Weber","email":"anna.weber@example.ch","phone":"+41 44 123 45 67","agreeToTerms":true,"country":"Switzerland","age":35}'
+ *                   JSON file or text containing field names and values to fill.
+ *                   You can either:
+ *                   1. Upload a .json file with the field data
+ *                   2. Enter JSON text directly (may not work in all Swagger UI versions)
+ *                   
+ *                   Example content: {"fullName":"Anna Weber","email":"anna.weber@example.ch","phone":"+41 44 123 45 67","agreeToTerms":true,"country":"Switzerland","age":35}
  *           encoding:
  *             pdf:
  *               contentType: application/pdf
  *             fields:
- *               contentType: text/plain
+ *               contentType: application/json
  *     responses:
  *       200:
  *         description: Successfully filled PDF form
@@ -258,11 +274,18 @@ router.post(
       // Fields can come from either req.body or as a "file" with application/json content-type
       let fieldsData: string | Record<string, any> | undefined = req.body.fields;
       
+      // Debug logging
+      console.log('DEBUG - req.body:', JSON.stringify(req.body, null, 2));
+      console.log('DEBUG - files:', files?.map(f => ({ fieldname: f.fieldname, size: f.size, mimetype: f.mimetype })));
+      console.log('DEBUG - fieldsData type:', typeof fieldsData);
+      console.log('DEBUG - fieldsData value:', fieldsData);
+      
       if (!fieldsData) {
         // Check if fields was sent as a file-like part with content-type
         const fieldsFile = files?.find(f => f.fieldname === 'fields');
         if (fieldsFile) {
           fieldsData = fieldsFile.buffer.toString('utf-8');
+          console.log('DEBUG - fieldsData from file:', fieldsData);
         }
       }
       
@@ -280,20 +303,37 @@ router.post(
         if (typeof fieldsData === 'object' && fieldsData !== null) {
           fieldData = fieldsData;
         } else if (typeof fieldsData === 'string') {
-          // Check if string is "[object Object]" which indicates a Swagger UI bug
-          if (fieldsData.trim() === '[object Object]') {
-            res.status(400).json({ 
-              error: 'Invalid JSON in "fields" parameter. Please enter the JSON data as text, not as an object reference.'
-            });
-            return;
+          const trimmed = fieldsData.trim();
+          
+          // If it's the problematic "[object Object]" string from Swagger UI,
+          // try to get it from req.body directly (Express might have parsed it)
+          if (trimmed === '[object Object]' || trimmed.startsWith('[object ')) {
+            // Check if Express body parser gave us the actual object
+            if (req.body && typeof req.body === 'object') {
+              // Find any field that looks like our data (not 'fields' itself)
+              const possibleFields = Object.keys(req.body).find(key => 
+                key !== 'fields' && typeof req.body[key] === 'object'
+              );
+              if (possibleFields) {
+                fieldData = req.body[possibleFields];
+              } else {
+                throw new Error('Swagger UI sent invalid format. Please upload a .json file instead.');
+              }
+            } else {
+              throw new Error('Swagger UI sent invalid format. Please upload a .json file instead.');
+            }
+          } else {
+            // Normal JSON string - parse it
+            fieldData = JSON.parse(fieldsData);
           }
-          fieldData = JSON.parse(fieldsData);
         } else {
           throw new Error('Unexpected fields data type');
         }
-      } catch {
+      } catch (error) {
         res.status(400).json({ 
-          error: 'Invalid JSON in "fields" parameter' 
+          error: 'Invalid JSON in "fields" parameter',
+          details: error instanceof Error ? error.message : 'Could not parse JSON',
+          hint: 'If using Swagger UI and getting this error, try uploading a .json file instead of entering text'
         });
         return;
       }
