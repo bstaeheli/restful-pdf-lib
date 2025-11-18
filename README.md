@@ -149,7 +149,7 @@ npm run lint             # Check code style
 
 ## Tech Stack
 
-- **Node.js 18+** with TypeScript
+- **Node.js 22+** with TypeScript
 - **Express.js** - Web framework for standalone deployment
 - **Azure Functions** - Serverless runtime
 - **pdf-lib** - PDF manipulation (MIT license)
