@@ -2,9 +2,11 @@
   "name": "restful-pdf-lib",
   "version": "0.0.1",
   "description": "REST API web service for PDF manipulation using pdf-lib.js",
-  "main": "dist/index.js",
+  "main": "dist/functions.js",
   "scripts": {
     "build": "tsc",
+    "build:prod": "tsc --sourceMap false --declaration false",
+    "build:watch": "tsc --watch",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "test": "jest",
@@ -12,7 +14,11 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint src --ext .ts",
     "docker:build": "docker build -t restful-pdf-lib .",
-    "docker:run": "docker run -p 3000:3000 -e API_SECRET=your-secret-here restful-pdf-lib"
+    "docker:run": "docker run -p 3000:3000 -e API_SECRET=your-secret-here restful-pdf-lib",
+    "func:start": "npm run build && npx func start",
+    "func:build": "npm run build:prod && npx func extensions install",
+    "func:deploy": "npm run build:prod && npx func azure functionapp publish",
+    "func:dev": "npm run build:watch & npx func start"
   },
   "keywords": [
     "pdf",
@@ -25,6 +31,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@azure/functions": "^4.5.1",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "multer": "^2.0.2",
@@ -52,6 +59,6 @@
     "typescript": "^5.9.3"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.0.0"
   }
 }
