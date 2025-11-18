@@ -218,7 +218,8 @@ app.http('extract-fields', {
 app.http('fill-form', {
   methods: ['POST'],
   route: 'pdf/fill-form',
-  handler: fillForm
+  handler: fillForm,
+  authLevel: 'anonymous'
 });
 
 app.http('health', {
