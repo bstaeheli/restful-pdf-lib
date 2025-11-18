@@ -1,0 +1,10 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "FUNCTIONS_EXTENSION_VERSION": "~4",
+    "API_SECRET": "your-local-secret-here",
+    "NODE_ENV": "development"
+  }
+}

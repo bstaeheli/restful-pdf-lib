@@ -3,6 +3,21 @@ import packageJson from '../../package.json';
 
 // Get base URL and ensure it has protocol
 const getServerUrl = (): string => {
+  // Check if running in Azure Functions
+  const isAzureFunction = process.env.FUNCTIONS_WORKER_RUNTIME === 'node';
+  
+  if (isAzureFunction) {
+    // For Azure Functions, detect the URL
+    const functionAppUrl = process.env.WEBSITE_HOSTNAME;
+    if (functionAppUrl) {
+      // Production Azure Functions (always HTTPS)
+      return `https://${functionAppUrl}`;
+    }
+    // Local Azure Functions development (always HTTP)
+    return 'http://localhost:7071';
+  }
+  
+  // Express.js default
   const baseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
   // If URL doesn't start with http:// or https://, assume https://
   if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {

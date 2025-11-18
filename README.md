@@ -2,13 +2,15 @@
 
 ![Docker Build](https://github.com/bstaeheli/restful-pdf-lib/actions/workflows/docker-publish.yml/badge.svg)
 
-A REST API for PDF manipulation using [pdf-lib](https://pdf-lib.js.org).
+A REST API for PDF manipulation using [pdf-lib](https://pdf-lib.js.org). Deploy as a standalone Docker container or as Azure Functions.
 
 **Features:**
 - 📄 Extract form fields from PDFs
 - ✍️ Fill PDF forms with data
 - 🔒 Secure authentication
 - 🐳 Docker ready
+- ☁️ Azure Functions support
+- 🚀 Multiple deployment options
 
 ## Table of Contents
 
@@ -17,8 +19,9 @@ A REST API for PDF manipulation using [pdf-lib](https://pdf-lib.js.org).
   - [Extract PDF Fields](#extract-pdf-fields)
   - [Fill PDF Form](#fill-pdf-form)
   - [Health Check](#health-check-no-auth)
-- [Docker](#docker)
-- [Azure Deployment](#azure-deployment)
+- [Deployment Options](#deployment-options)
+  - [Docker](#docker)
+  - [Azure Functions](#azure-functions)
 - [Development](#development)
 - [Environment Variables](#environment-variables)
 - [Tech Stack](#tech-stack)
@@ -66,60 +69,75 @@ curl -X POST http://localhost:3000/api/pdf/fill-form \
 curl http://localhost:3000/health
 ```
 
-## Docker
+## Deployment Options
 
+### Docker
+
+The project is automatically built and published to GitHub Container Registry on every push to main/develop branches.
+
+**Pull and run pre-built image:**
 ```bash
-# Use pre-built image
 docker pull ghcr.io/bstaeheli/restful-pdf-lib:latest
 docker run -p 3000:3000 -e API_SECRET=your-secret ghcr.io/bstaeheli/restful-pdf-lib:latest
-
-# Or build locally
-docker build -t restful-pdf-lib .
-docker run -p 3000:3000 -e API_SECRET=your-secret restful-pdf-lib
 ```
 
-## Azure Deployment
+**Build locally:**
+```bash
+npm run docker:build
+npm run docker:run
+```
 
-Deploy to Azure Container Instances with automatic HTTPS using Bicep templates.
+**Available tags:**
+- `latest` - Latest build from main branch
+- `develop` - Latest build from develop branch
+- `v*` - Semantic version tags
+- `sha-*` - Git commit SHA tags
 
-**See [azure/README.md](./azure/README.md) for detailed deployment instructions.**
+**See [.github/workflows/docker-publish.yml](./.github/workflows/docker-publish.yml) for the automated build configuration.**
 
-Quick deployment:
+### Azure Functions
+
+Deploy as a serverless Azure Function for automatic scaling and pay-per-use pricing.
+
+**Prerequisites:**
+- Azure CLI
+- Azure Functions Core Tools v4
+- Azure subscription
+
+**Quick deployment:**
 ```bash
 cd azure
-cp .env.template .env
-# Edit .env with your Azure configuration
-./deploy.ps1
+cp staging.env.template staging.env
+# Edit staging.env with your Azure configuration
+./deploy-functions.ps1 staging
 ```
 
-The deployment includes:
-- Azure Container Instances with the PDF library service
-- Caddy reverse proxy for automatic HTTPS
-- Azure Storage for persistence
-- Public HTTPS endpoint
-
-For manual deployment:
+**Local development:**
 ```bash
-az container create \
-  --resource-group myResourceGroup \
-  --name restful-pdf-lib \
-  --image ghcr.io/bstaeheli/restful-pdf-lib:latest \
-  --cpu 1 --memory 1 \
-  --dns-name-label pdf-service \
-  --ports 3000 \
-  --environment-variables NODE_ENV=production PORT=3000 \
-  --secure-environment-variables API_SECRET=your-secret
+npm run func:dev
 ```
+
+Functions will be available at `http://localhost:7071/api/`
+
+For detailed Azure Functions setup, configuration, and troubleshooting, see **[azure/README.md](./azure/README.md)**
 
 ## Development
 
 ```bash
-npm run dev              # Start with hot reload
+npm run dev              # Start Express with hot reload
+npm run func:dev         # Start Azure Functions locally
 npm test                 # Run tests
 npm run test:coverage    # Coverage report
 npm run build            # Build for production
 npm run lint             # Check code style
 ```
+
+**NPM Scripts:**
+- `npm run dev` - Run Express.js server with hot reload
+- `npm run func:start` - Start Azure Functions runtime
+- `npm run func:dev` - Start Functions with watch mode
+- `npm run docker:build` - Build Docker image
+- `npm run docker:run` - Run Docker container locally
 
 ## Environment Variables
 
@@ -131,12 +149,14 @@ npm run lint             # Check code style
 
 ## Tech Stack
 
-- **Node.js 20+** with TypeScript
-- **Express.js** - Web framework
-- **pdf-lib** - PDF manipulation (MIT)
-- **Jest** - Testing
+- **Node.js 22+** with TypeScript
+- **Express.js** - Web framework for standalone deployment
+- **Azure Functions** - Serverless runtime
+- **pdf-lib** - PDF manipulation (MIT license)
+- **Jest** - Testing framework
 - **Docker** - Containerization
-- **GitHub Actions** - CI/CD
+- **GitHub Actions** - CI/CD pipelines
+- **Bicep** - Infrastructure as Code for Azure
 
 ## License
 
@@ -296,22 +316,6 @@ docker run -p 3000:3000 \
   restful-pdf-lib
 ```
 
-### Using Docker Compose
-
-```bash
-# Set your API secret in environment
-export API_SECRET=your-secret-token
-
-# Start the service
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop the service
-docker-compose down
-```
-
 ## GitHub Actions CI/CD
 
 This project uses GitHub Actions for automated testing and Docker image publishing.
@@ -333,18 +337,16 @@ When you push code to GitHub:
 
 ```bash
 # Latest version
-docker pull ghcr.io/<your-username>/restful-pdf-lib:latest
+docker pull ghcr.io/bstaeheli/restful-pdf-lib:latest
 
 # Specific version
-docker pull ghcr.io/<your-username>/restful-pdf-lib:v1.0.0
+docker pull ghcr.io/bstaeheli/restful-pdf-lib:v1.0.0
 
-# Specific branch
-docker pull ghcr.io/<your-username>/restful-pdf-lib:main
+# Develop branch
+docker pull ghcr.io/bstaeheli/restful-pdf-lib:develop
 ```
 
-See [GITHUB-ACTIONS.md](GITHUB-ACTIONS.md) for detailed documentation.
-
-## Azure Deployment
+## Azure Functions Deployment
 
 ### Option 1: Deploy from GitHub Container Registry (Recommended)
 
@@ -445,7 +447,7 @@ All dependencies have been verified to use permissive licenses suitable for comm
 ## Project Structure
 
 ```
-pdf-lib-webservice/
+restful-pdf-lib/
 ├── src/
 │   ├── middleware/
 │   │   ├── auth.middleware.ts      # Authentication middleware
@@ -458,15 +460,26 @@ pdf-lib-webservice/
 │   │   └── pdf.service.ts          # PDF manipulation logic
 │   ├── types/
 │   │   └── pdf.types.ts            # TypeScript interfaces
+│   ├── config/
+│   │   └── swagger.ts              # Swagger/OpenAPI config
 │   ├── app.ts                      # Express app setup
-│   └── index.ts                    # Server entry point
+│   ├── index.ts                    # Server entry point
+│   ├── functions.ts                # Azure Functions handlers
+│   └── swagger-functions.ts        # Swagger for Azure Functions
 ├── dist/                           # Compiled JavaScript (generated)
 ├── coverage/                       # Test coverage reports (generated)
 ├── .github/
-│   └── copilot-instructions.md     # Project guidelines
+│   ├── copilot-instructions.md     # Project guidelines
+│   └── workflows/
+│       └── docker-publish.yml      # Docker image CI/CD
+├── azure/
+│   ├── function-app.bicep          # Azure infrastructure (Flex Consumption)
+│   ├── deploy-functions.ps1        # Deployment script
+│   ├── *.env.template              # Environment templates
+│   └── README.md                   # Azure deployment guide
 ├── Dockerfile                      # Docker configuration
-├── docker-compose.yml              # Docker Compose setup
-├── azure-pipelines.yml             # CI/CD pipeline
+├── host.json                       # Azure Functions host config
+├── local.settings.json.template    # Azure Functions local settings
 ├── jest.config.js                  # Jest configuration
 ├── tsconfig.json                   # TypeScript configuration
 ├── package.json                    # Dependencies and scripts

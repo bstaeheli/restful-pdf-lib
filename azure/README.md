@@ -1,187 +1,165 @@
-# Azure Container Instance (ACI) Deployment
+# Azure Functions Deployment
 
-Deploy the RESTful PDF Library service to Azure Container Instances with automatic HTTPS using Caddy as a reverse proxy.
+This directory contains the infrastructure and deployment scripts for deploying the PDF Library service to Azure Functions.
 
-## Architecture
+## Files Overview
 
-This deployment creates an Azure Container Instance container group with two containers:
-
-- **restful-pdf-lib**: The main PDF manipulation service running on port 3000
-- **caddy**: A reverse proxy providing automatic HTTPS since ACI does not provide SSL natively
+- `function-app.bicep` - Bicep template for Azure Functions infrastructure
+- `deploy-functions.ps1` - PowerShell deployment script for Azure Functions
+- `*.env.template` - Environment configuration templates
 
 ## Prerequisites
 
-- Azure CLI installed and configured
-- PowerShell (for Windows) or PowerShell Core (for macOS/Linux)
-- An Azure subscription
-- Docker image published to GitHub Container Registry: `ghcr.io/bstaeheli/restful-pdf-lib:latest`
+1. Azure CLI installed and logged in
+2. Azure Functions Core Tools v4
+3. Node.js 18+ and npm
+4. PowerShell 7+ (recommended)
+5. Appropriate Azure subscription permissions
 
-## Deployment Instructions
+## Configuration
 
-### Multi-Environment Setup
-
-This deployment supports multiple environments: **dev**, **staging**, and **prod**.
-
-1. **Configure Environment Variables**
-
-   Copy the appropriate template for your environment:
-
-   ```bash
-   # For development
-   cp dev.env.template dev.env
-   
-   # For staging
+1. Copy the environment template for your target environment:
+   ```powershell
    cp staging.env.template staging.env
-   
-   # For production
+   # or
    cp prod.env.template prod.env
    ```
 
-2. **Populate the environment file**
+2. Edit the `.env` file with your specific values:
+   - `TENANT_ID` - Your Azure AD tenant ID
+   - `SUBSCRIPTION_ID` - Your Azure subscription ID
+   - `RESOURCE_GROUP` - Name for the resource group
+   - `LOCATION` - Azure region (e.g., "West Europe")
+   - `FUNCTION_APP_NAME` - Name for the Function App (must be globally unique)
+   - `STORAGE_ACCOUNT_NAME` - Name for the storage account (must be globally unique)
+   - `API_SECRET` - Secret token for API authentication
 
-   Edit your environment file (e.g., `prod.env`) with your Azure configuration:
+## Deployment Options
 
-   ```env
-   TENANT_ID=your-tenant-id
-   SUBSCRIPTION_ID=your-subscription-id
-   RESOURCE_GROUP=pdf-lib-prod-rg
-   LOCATION=westeurope
-   CONTAINER_GROUP_NAME=pdf-lib-prod
-   STORAGE_ACCOUNT_NAME=pdfliststorageprod
-   API_SECRET=your-secret-token
-   API_BASE_URL=https://pdf-lib-prod.westeurope.azurecontainer.io
-   ```
+### Option 1: Azure Functions (Serverless)
 
-3. **Run the Deployment**
+Deploy to Azure Functions for serverless execution:
 
-   Execute the PowerShell deployment script with the desired environment:
+```powershell
+# Deploy to staging
+./deploy-functions.ps1 staging
 
-   ```powershell
-   # Deploy to production (default)
-   ./deploy.ps1 prod
-   
-   # Deploy to staging
-   ./deploy.ps1 staging
-   
-   # Deploy to development
-   ./deploy.ps1 dev
-   ```
-
-   This script will:
-   - Load environment variables from `.env`
-   - Login to Azure
-   - Create the resource group
-   - Deploy the Bicep template
-
-4. **Access the Service**
-
-   After deployment, the service will be available at:
-   - HTTPS: `https://{CONTAINER_GROUP_NAME}.{LOCATION}.azurecontainer.io`
-   - HTTP: `http://{CONTAINER_GROUP_NAME}.{LOCATION}.azurecontainer.io` (redirects to HTTPS)
-
-   For example: `https://pdf-lib-aci.westeurope.azurecontainer.io`
-
-## Parameters
-
-| Parameter              | Description                                                      | Example              |
-| ---------------------- | ---------------------------------------------------------------- | -------------------- |
-| `containerGroupName`   | The name of the Azure Container Instance container group         | `pdf-lib-aci`        |
-| `storageAccountName`   | The name of the storage account to be created (must be unique)   | `pdfliststorage`     |
-| `location`             | Azure region where resources will be deployed                    | `westeurope`         |
-| `apiSecret`            | Secret token for authenticating API requests                     | `your-secret-token`  |
-| `apiBaseUrl`           | The public URL where the service will be accessible              | `https://pdf-lib-aci.westeurope.azurecontainer.io` |
-
-## Bicep Files
-
-| File                    | Description                                                                          |
-| ----------------------- | ------------------------------------------------------------------------------------ |
-| `main.bicep`            | The main Bicep file that orchestrates the deployment of the entire solution          |
-| `storage-account.bicep` | Creates a storage account and file shares to persist data for the Caddy container    |
-| `aci.bicep`             | Defines the Azure Container Instance container group with the PDF lib and Caddy containers |
-
-## Resource Details
-
-### Storage Account
-- SKU: Standard_LRS
-- Kind: StorageV2
-- Access Tier: Hot
-- TLS Version: 1.2 minimum
-- Public blob access: Disabled
-- Creates a file share for Caddy data persistence
-
-### Container Group
-- OS: Linux
-- Restart Policy: Never
-- Public IP with DNS name label
-- Ports: 80 (HTTP), 443 (HTTPS)
-
-### Containers
-
-#### Caddy Container
-- Image: `docker.io/caddy:latest`
-- CPU: 1 core
-- Memory: 1 GB
-- Provides automatic HTTPS with Let's Encrypt
-- Reverse proxies to the PDF library service on localhost:3000
-
-#### PDF Library Container
-- Image: `ghcr.io/bstaeheli/restful-pdf-lib:latest`
-- CPU: 1 core
-- Memory: 1 GB
-- Environment variables:
-  - `PORT`: 3000
-  - `API_BASE_URL`: Public URL of the service
-  - `API_SECRET`: Authentication token (secure)
-
-## Cleanup
-
-To remove all deployed resources:
-
-```bash
-az group delete --name {RESOURCE_GROUP} --yes --no-wait
+# Deploy to production
+./deploy-functions.ps1 production
 ```
+
+The deployment script will:
+1. Log into Azure using the specified tenant
+2. Create the resource group if it doesn't exist
+3. Deploy the Function App infrastructure
+4. Build and deploy the function code
+5. Run health checks
+
+### Option 2: Docker Container
+
+The project also supports Docker deployment via GitHub Container Registry:
+
+1. **Local Development:**
+   ```bash
+   npm run docker:build
+   npm run docker:run
+   ```
+
+2. **Production via GitHub Container Registry:**
+   - Push to main branch triggers automatic build and push to `ghcr.io/bstaeheli/restful-pdf-lib`
+   - Use the published image in your preferred container platform
+
+## Service Endpoints
+
+### Azure Functions
+After deployment, the service will be available at:
+- Health check: `https://{function-app-name}.azurewebsites.net/api/health`
+- Extract fields: `POST https://{function-app-name}.azurewebsites.net/api/pdf/extract-fields`
+- Fill form: `POST https://{function-app-name}.azurewebsites.net/api/pdf/fill-form`
+
+### Docker Container
+When running in Docker:
+- Health check: `http://localhost:3000/health`
+- API documentation: `http://localhost:3000/api-docs`
+- Extract fields: `POST http://localhost:3000/api/pdf/extract-fields`
+- Fill form: `POST http://localhost:3000/api/pdf/fill-form`
+
+## Development
+
+### Local Azure Functions Development
+
+1. Install Azure Functions Core Tools:
+   ```bash
+   npm install -g azure-functions-core-tools@4
+   ```
+
+2. Start local Functions runtime:
+   ```bash
+   npm run func:dev
+   ```
+
+3. Functions will be available at:
+   - `http://localhost:7071/api/health`
+   - `http://localhost:7071/api/pdf/extract-fields`
+   - `http://localhost:7071/api/pdf/fill-form`
+
+### Local Express Development
+
+1. Start the Express server:
+   ```bash
+   npm run dev
+   ```
+
+2. API will be available at:
+   - `http://localhost:3000/health`
+   - `http://localhost:3000/api-docs`
+   - `http://localhost:3000/api/pdf/extract-fields`
+   - `http://localhost:3000/api/pdf/fill-form`
+
+## Monitoring
+
+The Azure Functions deployment includes:
+- Application Insights for monitoring and logging
+- Azure Storage for Function App state
+- Health check endpoint for monitoring
+- CORS configuration for web access
+
+## GitHub Actions
+
+The project includes two GitHub Actions workflows:
+
+1. **Docker Build & Push** (`.github/workflows/docker-publish.yml`)
+   - Builds and pushes Docker images to GitHub Container Registry
+   - Runs on push to main/develop branches and tags
 
 ## Troubleshooting
 
-### View Container Logs
-
-```bash
-# View PDF library logs
-az container logs --resource-group {RESOURCE_GROUP} --name {CONTAINER_GROUP_NAME} --container-name {CONTAINER_GROUP_NAME}-pdf-lib
-
-# View Caddy logs
-az container logs --resource-group {RESOURCE_GROUP} --name {CONTAINER_GROUP_NAME} --container-name {CONTAINER_GROUP_NAME}-caddy
-```
-
-### Check Container Status
-
-```bash
-az container show --resource-group {RESOURCE_GROUP} --name {CONTAINER_GROUP_NAME} --query instanceView.state
-```
-
 ### Common Issues
 
-1. **Storage account name already exists**: Storage account names must be globally unique. Choose a different name.
-2. **Container fails to start**: Check the logs using the commands above.
-3. **HTTPS certificate not working**: Caddy needs a few minutes to obtain the Let's Encrypt certificate on first run.
+1. **Function App name already exists**
+   - Function App names must be globally unique
+   - Try a different name in your environment file
 
-## Security Considerations
+2. **Storage account name already exists**
+   - Storage account names must be globally unique
+   - Use a random suffix in the storage account name
 
-- API secret is passed as a secure parameter and stored as an environment variable
-- Storage account has blob public access disabled
-- HTTPS is enforced via Caddy
-- Minimum TLS 1.2 is required for the storage account
-- Network ACLs allow Azure services by default
+3. **Insufficient permissions**
+   - Ensure your account has Contributor access to the subscription
 
-## Cost Estimation
+4. **Function deployment failures**
+   - Check build logs with `npm run build`
+   - Verify all dependencies are properly installed
+   - Check Function App logs in Azure Portal
 
-The deployment uses:
-- 1 Container Group (2 containers)
-- Each container: 1 CPU core, 1 GB RAM
-- 1 Storage account with minimal file share (1 GB)
+### Checking Logs
 
-Estimated monthly cost (approximate):
-- Container Instances: ~€30-40/month (depending on region and uptime)
-- Storage: ~€0.50/month
+**Azure Functions:**
+1. Navigate to your Function App in Azure Portal
+2. Go to "Functions" > select your function > "Monitor"
+3. Or use Application Insights for detailed monitoring
 
-Costs will vary based on region, actual resource usage, and uptime.
+**Docker Container:**
+```bash
+docker logs restful-pdf-lib
+```
