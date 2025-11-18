@@ -211,7 +211,8 @@ async function healthCheck(_request: HttpRequest, _context: InvocationContext): 
 app.http('extract-fields', {
   methods: ['POST'],
   route: 'pdf/extract-fields',
-  handler: extractFields
+  handler: extractFields,
+  authLevel: 'anonymous'
 });
 
 app.http('fill-form', {
