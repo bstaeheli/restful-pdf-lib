@@ -128,13 +128,9 @@ The Azure Functions deployment includes:
 
 The project includes two GitHub Actions workflows:
 
-1. **Docker Build & Push** (`.github/workflows/docker.yml`)
+1. **Docker Build & Push** (`.github/workflows/docker-publish.yml`)
    - Builds and pushes Docker images to GitHub Container Registry
    - Runs on push to main/develop branches and tags
-
-2. **Azure Functions Deploy** (`.github/workflows/azure-functions.yml`)
-   - Deploys to Azure Functions
-   - Runs on push to main branch or manual trigger
 
 ## Troubleshooting
 

@@ -119,7 +119,7 @@ npm run func:dev
 
 Functions will be available at `http://localhost:7071/api/`
 
-**See [azure/README.md](./azure/README.md) for detailed Azure Functions deployment instructions.**
+For detailed Azure Functions setup, configuration, and troubleshooting, see **[azure/README.md](./azure/README.md)**
 
 ## Development
 
@@ -471,8 +471,7 @@ restful-pdf-lib/
 ├── .github/
 │   ├── copilot-instructions.md     # Project guidelines
 │   └── workflows/
-│       ├── docker-publish.yml      # Docker image CI/CD
-│       └── azure-functions.yml     # Azure Functions deployment
+│       └── docker-publish.yml      # Docker image CI/CD
 ├── azure/
 │   ├── function-app.bicep          # Azure infrastructure (Flex Consumption)
 │   ├── deploy-functions.ps1        # Deployment script
