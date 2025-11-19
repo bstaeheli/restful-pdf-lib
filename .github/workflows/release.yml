@@ -1,0 +1,40 @@
+name: Create Release
+
+on:
+  push:
+    tags: [ 'v*.*.*' ]
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          body: |
+            ## Docker Image
+            
+            Docker image will be built and published when this release is published.
+            
+            ```bash
+            docker pull ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+            ```
+            
+            **Available tags after publishing:**
+            - `${{ github.ref_name }}`
+            - `latest`
+            - `build-XXX`
+            - `sha-XXX`
+            
+            [View on GitHub Container Registry](https://github.com/${{ github.repository }}/pkgs/container/restful-pdf-lib)
