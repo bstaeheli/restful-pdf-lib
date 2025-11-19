@@ -23,6 +23,13 @@ The secret is configured via the `API_SECRET` environment variable.
 - Write comprehensive tests for all endpoints
 - Follow REST API best practices
 
+## Documentation Standards
+- Keep documentation concise and to the point
+- No emojis in documentation
+- Avoid general knowledge explanations (Docker basics, Git workflows, etc.)
+- Focus on project-specific information only
+- Assume readers have basic technical knowledge
+
 ## Available Endpoints
 - `POST /api/pdf/extract-fields` - Upload a PDF and get form fields as JSON
 - `POST /api/pdf/fill-form` - Upload a PDF and JSON data to fill the form
