@@ -1,5 +1,6 @@
 # RESTful PDF Library
 
+![Test](https://github.com/bstaeheli/restful-pdf-lib/actions/workflows/test.yml/badge.svg)
 ![Docker Build](https://github.com/bstaeheli/restful-pdf-lib/actions/workflows/docker-publish.yml/badge.svg)
 
 REST API for PDF manipulation using [pdf-lib](https://pdf-lib.js.org).
