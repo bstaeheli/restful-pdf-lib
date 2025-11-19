@@ -3,6 +3,12 @@ name: Docker Build and Publish
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag to publish (e.g., 0.1.0 or test)'
+        required: false
+        type: string
 
 env:
   REGISTRY: ghcr.io
@@ -43,8 +49,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        id: meta
+      - name: Extract Docker metadata (release)
+        if: github.event_name == 'release'
+        id: meta_release
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
@@ -56,6 +63,17 @@ jobs:
             type=raw,value=build-${{ github.run_number }}
             type=raw,value=latest
 
+      - name: Extract Docker metadata (manual)
+        if: github.event_name == 'workflow_dispatch'
+        id: meta_manual
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
+            type=sha
+            type=raw,value=build-${{ github.run_number }}
+
       - name: Build and push Docker image (amd64 only)
         id: build
         uses: docker/build-push-action@v5
@@ -63,8 +81,8 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta_release.outputs.tags || steps.meta_manual.outputs.tags }}
+          labels: ${{ steps.meta_release.outputs.labels || steps.meta_manual.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
