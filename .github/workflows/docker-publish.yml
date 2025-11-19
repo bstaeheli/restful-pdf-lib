@@ -21,6 +21,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript (dist)
+        run: npm run build
+
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -44,12 +56,12 @@ jobs:
             type=raw,value=build-${{ github.run_number }}
             type=raw,value=latest
 
-      - name: Build and push Docker image
+      - name: Build and push Docker image (amd64 only)
         id: build
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
