@@ -1,6 +1,15 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { PdfService } from './services/pdf.service';
 
+// File type from FormData API
+type File = {
+  name: string;
+  type: string;
+  size: number;
+  arrayBuffer(): Promise<ArrayBuffer>;
+  text(): Promise<string>;
+};
+
 const pdfService = new PdfService();
 
 /**
@@ -151,7 +160,7 @@ async function fillForm(request: HttpRequest, context: InvocationContext): Promi
     try {
       const fieldsString = typeof fieldsData === 'string' ? fieldsData : await (fieldsData as File).text();
       fields = JSON.parse(fieldsString);
-    } catch (parseError) {
+    } catch {
       return {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
