@@ -1,45 +1,38 @@
-# Azure Deployment
+# Azure Functions Deployment
 
-Bicep infrastructure and deployment scripts for Azure Container Instances.
+Bicep infrastructure for Azure Functions (Flex Consumption).
 
 ## Files
 
-- `*.bicep` - Infrastructure as Code templates
-- `deploy.ps1` - PowerShell deployment script
+- `function-app.bicep` - Infrastructure as Code template
+- `deploy-functions.ps1` - PowerShell deployment script
 - `*.env` - Environment configurations (dev/staging/prod)
 
 ## Configuration
 
-Edit `.env` file with your Azure configuration:
+Edit `.env` file:
 - `TENANT_ID`, `SUBSCRIPTION_ID`, `RESOURCE_GROUP`, `LOCATION`
-- `CONTAINER_GROUP_NAME`, `STORAGE_ACCOUNT_NAME`
-- `API_SECRET`, `API_BASE_URL`
+- `FUNCTION_APP_NAME`, `STORAGE_ACCOUNT_NAME`
+- `API_SECRET`
 
 ## Deployment
 
 ```powershell
-.\deploy.ps1 -Environment prod -ImageTag latest
+.\deploy-functions.ps1 staging
+# or
+.\deploy-functions.ps1 production
 ```
-
-Script creates resource group, deploys Bicep templates, and restarts container.
 
 ## Endpoints
 
+After deployment, available at `https://{function-app-name}.azurewebsites.net/api/`
+
 - `GET /health`
-- `POST /api/pdf/extract-fields`
-- `POST /api/pdf/fill-form`
-
-URL from `API_BASE_URL` in `.env` file.
-
-## Infrastructure
-
-- `main.bicep` - Main template, orchestrates resources
-- `aci.bicep` - Azure Container Instance definition
-- `storage-account.bicep` - Storage account for file shares
-- `caddy.bicep` - Caddy reverse proxy container
+- `POST /pdf/extract-fields`
+- `POST /pdf/fill-form`
 
 ## Logs
 
 ```bash
-az container logs --name <container-group> --resource-group <rg> --follow
+az functionapp logs --name <function-app> --resource-group <rg>
 ```
