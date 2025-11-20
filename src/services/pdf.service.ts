@@ -56,12 +56,35 @@ export class PdfService {
         const widgets = (field as { acroField?: { getWidgets?: () => unknown[] } }).acroField?.getWidgets?.();
         const firstWidget = widgets?.[0] as { dict?: unknown; getRectangle?: () => { x: number; y: number; width: number; height: number } } | undefined;
 
-        if (firstWidget) {
-          // Find which page this widget is on
+        if (firstWidget && firstWidget.dict) {
+          // Find which page this widget is on by matching the annotation reference/dict
           const pages = pdfDoc.getPages();
+          const widgetRef = (firstWidget as { ref?: unknown }).ref;
+          const pdfContext = (pdfDoc as unknown as { context?: { lookup?: (ref: unknown) => unknown } }).context;
+
           for (let i = 0; i < pages.length; i++) {
             const annots = pages[i].node.Annots();
-            if (annots && firstWidget.dict && annots.asArray().includes(firstWidget.dict as never)) {
+            if (!annots) {
+              continue;
+            }
+
+            const annotsArray = annots.asArray();
+            const hasWidget = annotsArray.some((annotRef: unknown) => {
+              if (widgetRef && annotRef === widgetRef) {
+                return true;
+              }
+
+              if (pdfContext?.lookup) {
+                const resolved = pdfContext.lookup(annotRef);
+                if (resolved === firstWidget.dict) {
+                  return true;
+                }
+              }
+
+              return false;
+            });
+
+            if (hasWidget) {
               pageIndex = i;
               break;
             }
