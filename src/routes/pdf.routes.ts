@@ -273,7 +273,7 @@ router.post(
       }
 
       // Fields can come from either req.body or as a "file" with application/json content-type
-      let fieldsData: string | Record<string, any> | undefined = req.body.fields;
+      let fieldsData: string | Record<string, unknown> | undefined = req.body.fields;
       
       // Debug logging
       console.log('DEBUG - req.body:', JSON.stringify(req.body, null, 2));
@@ -302,7 +302,7 @@ router.post(
       try {
         // If fieldsData is already an object, use it directly
         if (typeof fieldsData === 'object' && fieldsData !== null) {
-          fieldData = fieldsData;
+          fieldData = fieldsData as Record<string, string | number | boolean>;
         } else if (typeof fieldsData === 'string') {
           const trimmed = fieldsData.trim();
           

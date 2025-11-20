@@ -1,6 +1,6 @@
 {
   "name": "restful-pdf-lib",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "REST API web service for PDF manipulation using pdf-lib.js",
   "main": "dist/functions.js",
   "scripts": {
